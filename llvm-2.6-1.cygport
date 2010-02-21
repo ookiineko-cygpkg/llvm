@@ -1,0 +1,11 @@
+inherit cmake
+
+HOMEPAGE="http://www.llvm.org/"
+SRC_URI="http://www.llvm.org/releases/${PV}/${P}.tar.gz
+         http://www.llvm.org/releases/${PV}/clang-${PV}.tar.gz"
+
+CYGPORT_USE_UNSTABLE_API=1
+src_unpack_hook() {
+	rm -fr tools/clang
+	mv ../clang-${PV} tools/clang
+}

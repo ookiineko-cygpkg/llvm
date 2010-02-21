@@ -1,0 +1,130 @@
+--- origsrc/llvm-2.6/CMakeLists.txt	2009-08-18 10:29:35.000000000 -0500
++++ src/llvm-2.6/CMakeLists.txt	2009-11-24 20:41:30.329796900 -0600
+@@ -4,7 +4,7 @@ project(LLVM)
+ cmake_minimum_required(VERSION 2.6.1)
+ 
+ set(PACKAGE_NAME llvm)
+-set(PACKAGE_VERSION 2.6svn)
++set(PACKAGE_VERSION 2.6)
+ set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
+ set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
+ 
+@@ -144,6 +144,11 @@ if(WIN32)
+   set(EXEEXT ".exe")
+   # Maximum path length is 160 for non-unicode paths
+   set(MAXPATHLEN 160)
++elseif(CYGWIN)
++  set(LLVM_ON_WIN32 0)
++  set(LLVM_ON_UNIX 1)
++  set(LTDL_SHLIB_EXT ".dll")
++  set(EXEEXT ".exe")
+ else(WIN32)
+   if(UNIX)
+     set(LLVM_ON_WIN32 0)
+--- origsrc/llvm-2.6/cmake/modules/AddLLVM.cmake	2009-08-16 04:44:27.000000000 -0500
++++ src/llvm-2.6/cmake/modules/AddLLVM.cmake	2009-11-24 20:17:16.218626500 -0600
+@@ -54,8 +54,6 @@ endmacro(add_llvm_tool name)
+ macro(add_llvm_example name)
+ #  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_EXAMPLES_BINARY_DIR})
+   add_llvm_executable(${name} ${ARGN})
+-  install(TARGETS ${name}
+-    RUNTIME DESTINATION examples)
+ endmacro(add_llvm_example name)
+ 
+ 
+--- origsrc/llvm-2.6/tools/clang/lib/Basic/Targets.cpp	2009-08-20 12:48:52.000000000 -0500
++++ src/llvm-2.6/tools/clang/lib/Basic/Targets.cpp	2009-11-25 01:41:58.357941200 -0600
+@@ -897,6 +897,31 @@ public:
+ } // end anonymous namespace
+ 
+ namespace {
++// x86-32 Cygwin target
++class CygwinX86_32TargetInfo : public X86_32TargetInfo {
++public:
++  CygwinX86_32TargetInfo(const std::string& triple)
++    : X86_32TargetInfo(triple) {
++    TLSSupported = false;
++    WCharType = UnsignedShort;
++    WCharWidth = WCharAlign = 16;
++    DoubleAlign = LongLongAlign = 64;
++    DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
++                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-"
++                        "a0:0:64-f80:32:32";
++  }
++  virtual void getTargetDefines(const LangOptions &Opts,
++                                std::vector<char> &Defines) const {
++    X86_32TargetInfo::getTargetDefines(Opts, Defines);
++    // This list is based off of the the list of things Cygwin GCC defines
++    DefineStd(Defines, "unix", Opts);
++    Define(Defines, "__CYGWIN__");
++    Define(Defines, "_X86_");
++  }
++};
++} // end anonymous namespace
++
++namespace {
+ // x86-32 Windows target
+ class WindowsX86_32TargetInfo : public X86_32TargetInfo {
+ public:
+@@ -1623,6 +1648,7 @@ TargetInfo* TargetInfo::CreateTargetInfo
+     case llvm::Triple::Solaris:
+       return new SolarisTargetInfo<X86_32TargetInfo>(T);
+     case llvm::Triple::Cygwin:
++      return new CygwinX86_32TargetInfo(T);
+     case llvm::Triple::MinGW32:
+     case llvm::Triple::MinGW64:
+     case llvm::Triple::Win32:
+--- origsrc/llvm-2.6/tools/clang/lib/Frontend/InitHeaderSearch.cpp	2009-08-19 15:04:03.000000000 -0500
++++ src/llvm-2.6/tools/clang/lib/Frontend/InitHeaderSearch.cpp	2009-11-25 01:52:57.835661100 -0600
+@@ -119,6 +119,27 @@ void InitHeaderSearch::AddDefaultSystemI
+ 
+   // Mingw32 GCC version 4
+   AddPath("C:/mingw/include", System, false, false, false);
++#elif defined(__CYGWIN__)
++  if (Lang.CPlusPlus) {
++    // Cygwin GCC version 4
++    AddPath("/usr/lib/gcc/i686-pc-cygwin/4.3.4/include/c++",
++            System, true, false, false);
++    AddPath("/usr/lib/gcc/i686-pc-cygwin/4.3.4/include/c++/i686-pc-cygwin",
++            System, true, false, false);
++    AddPath("/usr/lib/gcc/i686-pc-cygwin/4.3.4/include/c++/backward",
++            System, true, false, false);
++  }
++
++  if (Lang.ObjC1) {
++    // Cygwin GCC version 4
++    AddPath("/usr/lib/gcc/i686-pc-cygwin/4.3.4/include",
++            System, true, false, false);
++  }
++
++  // Cygwin GCC version 4
++  AddPath("/usr/local/include", System, false, false, false);
++  AddPath("/usr/include", System, false, false, false);
++  AddPath("/usr/include/w32api", System, false, false, false);
+ #else
+ 
+   if (Lang.CPlusPlus) {
+--- origsrc/llvm-2.6/tools/clang/lib/Headers/stddef.h	2008-12-01 11:20:57.000000000 -0600
++++ src/llvm-2.6/tools/clang/lib/Headers/stddef.h	2009-11-25 01:04:28.309245700 -0600
+@@ -30,6 +30,7 @@ typedef __typeof__(((int*)0)-((int*)0)) 
+ typedef __typeof__(sizeof(int)) size_t;
+ #ifndef __cplusplus
+ typedef __typeof__(*L"") wchar_t;
++typedef __typeof__(sizeof(*L"")) wint_t;
+ #endif
+ 
+ #ifdef __cplusplus
+--- origsrc/llvm-2.6/tools/clang/tools/driver/driver.cpp	2009-07-17 13:10:27.000000000 -0500
++++ src/llvm-2.6/tools/clang/tools/driver/driver.cpp	2009-11-25 00:26:05.638540500 -0600
+@@ -190,7 +190,11 @@ int main(int argc, const char **argv) {
+ 
+   Driver TheDriver(Path.getBasename().c_str(), Path.getDirname().c_str(),
+                    llvm::sys::getHostTriple().c_str(),
++#if defined(__CYGWIN__)
++                   "a.exe", Diags);
++#else
+                    "a.out", Diags);
++#endif
+ 
+   llvm::OwningPtr<Compilation> C;
+ 
