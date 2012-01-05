@@ -1,0 +1,9 @@
+category: Doc
+requires:
+external-source: llvm
+sdesc: "LLVM documentation"
+ldesc: "The LLVM Core libraries provide a modern source- and 
+target-independent optimizer, along with code generation support for 
+many popular CPUs (as well as some less common ones!) These libraries 
+are built around a well specified code representation known as the LLVM 
+intermediate representation (LLVM IR)."

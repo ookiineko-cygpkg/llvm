@@ -1,0 +1,20 @@
+--- origsrc/llvm-2.9/tools/clang/bindings/python/clang/cindex.py	2011-02-05 11:54:10.000000000 -0600
++++ src/llvm-2.9/tools/clang/bindings/python/clang/cindex.py	2011-12-27 00:11:02.318795500 -0600
+@@ -68,11 +68,13 @@ def get_cindex_library():
+     # FIXME: It's probably not the case that the library is actually found in
+     # this location. We need a better system of identifying and loading the
+     # CIndex library. It could be on path or elsewhere, or versioned, etc.
+-    import platform
+-    name = platform.system()
+-    if name == 'Darwin':
++    import sys
++    name = sys.platform
++    if name == 'darwin':
+         return cdll.LoadLibrary('libclang.dylib')
+-    elif name == 'Windows':
++    elif name == 'cygwin':
++        return cdll.LoadLibrary('cygclang.dll')
++    elif name == 'win32':
+         return cdll.LoadLibrary('libclang.dll')
+     else:
+         return cdll.LoadLibrary('libclang.so')

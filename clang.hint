@@ -1,0 +1,10 @@
+category: Devel
+requires: gcc4-core libgcc1 libllvm2.9 libstdc++6 llvm
+external-source: llvm
+sdesc: "C/C++/ObjC compiler frontend based on LLVM"
+ldesc: "Clang is an LLVM native C/C++/ObjC compiler, which aims to 
+deliver amazingly fast compiles, extremely useful error and warning 
+messages and to provide a platform for building great source level 
+tools. The Clang Static Analyzer is a tool that automatically finds bugs 
+in your code, and is a great example of the sort of tool that can be 
+built using the Clang frontend as a library to parse C/C++ code."
