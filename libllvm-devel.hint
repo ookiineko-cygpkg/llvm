@@ -1,5 +1,5 @@
 category: Libs
-requires: libllvm2.9
+requires: libllvm3.0 perl
 external-source: llvm
 sdesc: "LLVM library (development)"
 ldesc: "The LLVM Core libraries provide a modern source- and 
