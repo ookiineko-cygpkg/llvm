@@ -12,12 +12,13 @@ PATCH_URI="
 	2.9-python-ctypes.patch
 	3.0-llvm-config.patch
 	3.0-ocaml-install.patch
+	3.0-analyzer-realpath.patch
 "
 
 PKG_NAMES="llvm llvm-doc libllvm${PV} libllvm-devel ocaml-llvm
-           clang libclang libclang-devel python-clang"
+           clang clang-analyzer libclang libclang-devel python-clang"
 llvm_CONTENTS="--exclude=cygclang.dll --exclude=clang* --exclude=cygLLVM-*.dll
-               --exclude=llvm-config* --exclude=c-*.exe
+               --exclude=llvm-config* --exclude=c-*.exe --exclude=scan-*
                --exclude=html* --exclude=ps --exclude=ocamldoc*
                usr/bin/ usr/share/doc/ usr/share/man/man1/"
 llvm_doc_CONTENTS="usr/share/doc/${PN}/html* usr/share/doc/${PN}/ps/"
@@ -26,6 +27,7 @@ libllvm_devel_CONTENTS="--exclude=*clang* usr/bin/llvm-config usr/include/llvm*
                         usr/lib/lib* usr/share/man/man1/llvm-config*"
 ocaml_llvm_CONTENTS="${OCAML_LIBDIR#/} usr/share/doc/${PN}/ocamldoc*"
 clang_CONTENTS="usr/bin/c-* usr/bin/clang* usr/lib/clang/ usr/share/man/man1/clang*"
+clang_analyzer_CONTENTS="usr/bin/scan-* usr/share/clang-analyzer/"
 libclang_CONTENTS="usr/bin/cygclang.dll"
 libclang_devel_CONTENTS="usr/include/clang* usr/lib/libclang*"
 python_clang_CONTENTS="${PYTHON_SITELIB#/}/clang/"
@@ -53,6 +55,14 @@ src_compile() {
 src_install() {
 	cd ${B}
 	cyginstall PROJ_docsdir=/usr/share/doc/llvm
+
+	dodir /usr/share/clang-analyzer
+	for a in scan-build scan-view
+	do
+		cp -r ${S}/tools/clang/tools/$a ${D}/usr/share/clang-analyzer/
+		dosym ../share/clang-analyzer/$a/$a /usr/bin/$a
+	done
+	python_optimize /usr/share/clang-analyzer
 
 	pythoninto clang
 	dopython ${S}/tools/clang/bindings/python/clang/*.py
