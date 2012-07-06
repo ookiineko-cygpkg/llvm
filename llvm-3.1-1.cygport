@@ -1,18 +1,21 @@
-inherit ocaml python
+inherit ocaml python # python3
 
 DESCRIPTION="LLVM bytecode framework and toolchain"
 HOMEPAGE="http://www.llvm.org/"
-SRC_URI="http://www.llvm.org/releases/${PV}/${P}.tar.gz
-         http://www.llvm.org/releases/${PV}/clang-${PV}.tar.gz"
+SRC_URI="http://www.llvm.org/releases/${PV}/${P}.src.tar.gz
+         http://www.llvm.org/releases/${PV}/clang-${PV}.src.tar.gz"
 SRC_DIR="${P}.src"
 
 PATCH_URI="
-	http://patch-tracker.debian.org/patch/series/dl/${P}/${PV}-5/0009-Fix-doclinks.patch
+	mirror://portage/sys-devel/${PN}/files/${P}-fix_debug_line_info.patch
+	mirror://portage/sys-devel/${PN}/files/${P}-ivybridge_support.patch
 	2.9-implib.patch
 	2.9-python-ctypes.patch
-	3.0-llvm-config.patch
-	3.0-ocaml-install.patch
+	3.1-llvm-config.patch
 	3.0-analyzer-realpath.patch
+	3.0-cygwin-dllexport.patch
+	3.1-cygwin-includes.patch
+	3.1-cross-sysroot.patch
 "
 
 PKG_NAMES="llvm llvm-doc libllvm${PV} libllvm-devel ocaml-llvm
@@ -23,14 +26,17 @@ llvm_CONTENTS="--exclude=cygclang.dll --exclude=clang* --exclude=cygLLVM-*.dll
                usr/bin/ usr/share/doc/ usr/share/man/man1/"
 llvm_doc_CONTENTS="usr/share/doc/${PN}/html* usr/share/doc/${PN}/ps/"
 declare libllvm${PV//./_}_CONTENTS="usr/bin/cygLLVM-${PV}.dll"
-libllvm_devel_CONTENTS="--exclude=*clang* usr/bin/llvm-config usr/include/llvm*
-                        usr/lib/lib* usr/share/man/man1/llvm-config*"
+libllvm_devel_CONTENTS="usr/bin/llvm-config* usr/include/llvm*
+                        usr/lib/libLLVM-*.dll.a usr/share/man/man1/llvm-config*"
+libllvm_devel_static_CONTENTS="--exclude=*.dll.a usr/lib/libllvm* usr/lib/libLLVM*"
 ocaml_llvm_CONTENTS="${OCAML_LIBDIR#/} usr/share/doc/${PN}/ocamldoc*"
 clang_CONTENTS="usr/bin/c-* usr/bin/clang* usr/lib/clang/ usr/share/man/man1/clang*"
 clang_analyzer_CONTENTS="usr/bin/scan-* usr/share/clang-analyzer/"
 libclang_CONTENTS="usr/bin/cygclang.dll"
-libclang_devel_CONTENTS="usr/include/clang* usr/lib/libclang*"
+libclang_devel_CONTENTS="usr/include/clang-c/ usr/lib/libclang.dll.a"
+libclang_devel_static_CONTENTS="--exclude=*.dll.a usr/include/clang/ usr/lib/libclang*"
 python_clang_CONTENTS="${PYTHON_SITELIB#/}/clang/"
+python3_clang_CONTENTS="${PYTHON3_SITELIB#/}/clang/"
 
 CYGPORT_USE_UNSTABLE_API=1
 src_unpack_hook() {
@@ -39,15 +45,19 @@ src_unpack_hook() {
 }
 
 src_compile() {
-	local gccdir=/usr/lib/gcc/i686-pc-cygwin/$(${CC} -dumpversion)
+	# leave optimization to build system, fails to dlopen with -O2
+	CFLAGS=${CFLAGS/-O[0-9]/}
+	CXXFLAGS=${CXXFLAGS/-O[0-9]/}
+
+#	local gccdir=/usr/lib/gcc/i686-pc-cygwin/$(${CC} -dumpversion)
 
 	cd ${B}
-	cygconf --disable-assertions --enable-optimized \
-		--enable-targets=x86,cbe,cpp \
+	cygconf --disable-assertions --enable-optimized --enable-debug-runtime \
+		--enable-debug-symbols --enable-targets=all \
 		--enable-libffi --enable-shared --disable-embed-stdcxx \
-		--with-c-include-dirs=${gccdir}/include:${gccdir}/include-fixed:/usr/include:/usr/include/w32api \
-		--with-cxx-include-root=${gccdir}/include/c++ \
-		--with-cxx-include-arch=i686-pc-cygwin
+		--with-gcc-toolchain=/usr
+#		--with-clang-resource-dir=../lib/clang/i686-pc-cygwin/${PV} \
+#		--with-c-include-dirs=${gccdir}/include:/usr/include:/usr/include/w32api
 
 	cygmake REQUIRES_RTTI=1
 }
@@ -55,6 +65,7 @@ src_compile() {
 src_install() {
 	cd ${B}
 	cyginstall PROJ_docsdir=/usr/share/doc/llvm
+#		PROJ_headers=${D}/usr/lib/clang/i686-pc-cygwin/${PV}/include
 
 	dodir /usr/share/clang-analyzer
 	for a in scan-build scan-view
@@ -67,6 +78,11 @@ src_install() {
 	pythoninto clang
 	dopython ${S}/tools/clang/bindings/python/clang/*.py
 	python_optimize
+
+#	python3into clang
+#	dopython ${S}/tools/clang/bindings/python/clang/*.py
+#	2to3 ${D}${PYTHON3_SITELIB}/clang/*.py
+#	python3_optimize
 
 	find ${D}${OCAML_LIBDIR} -type l -delete
 }

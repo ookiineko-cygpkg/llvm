@@ -1,5 +1,5 @@
 category: Libs
-requires: libllvm3.0 perl
+requires: libgcc1 libstdc++6 libllvm3.1
 external-source: llvm
 sdesc: "LLVM library (development)"
 ldesc: "The LLVM Core libraries provide a modern source- and 

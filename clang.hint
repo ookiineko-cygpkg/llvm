@@ -1,5 +1,5 @@
 category: Devel
-requires: gcc4-core libgcc1 libllvm3.0 libstdc++6 llvm
+requires: gcc4-core gcc4-g++ libgcc1 libllvm3.1 libstdc++6
 external-source: llvm
 sdesc: "C/C++/ObjC compiler frontend based on LLVM"
 ldesc: "Clang is an LLVM native C/C++/ObjC compiler, which aims to 

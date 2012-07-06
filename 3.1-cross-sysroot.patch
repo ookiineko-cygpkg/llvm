@@ -1,0 +1,15 @@
+--- origsrc/llvm-3.1.src/tools/clang/tools/driver/driver.cpp	2012-03-13 15:09:56.000000000 -0500
++++ src/llvm-3.1.src/tools/clang/tools/driver/driver.cpp	2012-07-05 22:19:45.156241200 -0500
+@@ -337,6 +337,12 @@ static void ParseProgName(SmallVectorImp
+     ArgVector.insert(it, SaveStringInSet(SavedStrings, Prefix));
+     ArgVector.insert(it,
+       SaveStringInSet(SavedStrings, std::string("-target")));
++    ArgVector.insert(it, SaveStringInSet(SavedStrings,
++      std::string("--sysroot=/usr/" + Prefix.str() + "/sys-root")));
++    ArgVector.insert(it, SaveStringInSet(SavedStrings,
++      std::string("/usr/" + Prefix.str() + "/include")));
++    ArgVector.insert(it,
++      SaveStringInSet(SavedStrings, std::string("-isystem")));
+   }
+ }
+ 
