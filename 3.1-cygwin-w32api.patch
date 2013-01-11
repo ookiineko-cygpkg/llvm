@@ -1,0 +1,12 @@
+http://cygwin.com/ml/cygwin/2013-01/msg00128.html
+
+--- origsrc/llvm-3.1.src/tools/clang/lib/Basic/Targets.cpp	2012-04-25 13:26:22.000000000 -0500
++++ src/llvm-3.1.src/tools/clang/lib/Basic/Targets.cpp	2013-01-10 17:28:21.891693400 -0600
+@@ -2370,6 +2370,7 @@ public:
+   virtual void getTargetDefines(const LangOptions &Opts,
+                                 MacroBuilder &Builder) const {
+     X86_32TargetInfo::getTargetDefines(Opts, Builder);
++    Builder.defineMacro("_X86_");
+     Builder.defineMacro("__CYGWIN__");
+     Builder.defineMacro("__CYGWIN32__");
+     DefineStd(Builder, "unix", Opts);

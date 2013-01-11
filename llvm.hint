@@ -1,8 +1,0 @@
-category: Interpreters Devel
-requires: libgcc1 libllvm3.1 libstdc++6
-sdesc: "LLVM bytecode interpreter and toolchain"
-ldesc: "The LLVM Core libraries provide a modern source- and 
-target-independent optimizer, along with code generation support for 
-many popular CPUs (as well as some less common ones!) These libraries 
-are built around a well specified code representation known as the LLVM 
-intermediate representation (LLVM IR)."

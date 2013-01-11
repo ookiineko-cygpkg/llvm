@@ -1,6 +1,14 @@
-inherit ocaml python # python3
+inherit ocaml python python3
 
-DESCRIPTION="LLVM bytecode framework and toolchain"
+NAME="llvm"
+VERSION=3.1
+RELEASE=2
+CATEGORY="Interpreters Devel"
+SUMMARY="LLVM bytecode interpreter and toolchain"
+DESCRIPTION="The LLVM Core libraries provide a modern source- and target-
+independent optimizer, along with code generation support for many popular CPUs
+(as well as some less common ones!) These libraries are built around a well
+specified code representation known as the LLVM intermediate representation."
 HOMEPAGE="http://www.llvm.org/"
 SRC_URI="http://www.llvm.org/releases/${PV}/${P}.src.tar.gz
          http://www.llvm.org/releases/${PV}/clang-${PV}.src.tar.gz"
@@ -16,26 +24,53 @@ PATCH_URI="
 	3.0-cygwin-dllexport.patch
 	3.1-cygwin-includes.patch
 	3.1-cross-sysroot.patch
+	3.1-cygwin-w32api.patch
 "
 
-PKG_NAMES="llvm llvm-doc libllvm${PV} libllvm-devel ocaml-llvm
-           clang clang-analyzer libclang libclang-devel python-clang"
+PKG_NAMES="llvm llvm-doc libllvm3.1 libllvm-devel ocaml-llvm
+           clang clang-analyzer libclang libclang-devel python-clang python3-clang"
 llvm_CONTENTS="--exclude=cygclang.dll --exclude=clang* --exclude=cygLLVM-*.dll
                --exclude=llvm-config* --exclude=c-*.exe --exclude=scan-*
                --exclude=html* --exclude=ps --exclude=ocamldoc*
                usr/bin/ usr/share/doc/ usr/share/man/man1/"
+llvm_doc_SUMMARY="LLVM documentation"
 llvm_doc_CONTENTS="usr/share/doc/${PN}/html* usr/share/doc/${PN}/ps/"
-declare libllvm${PV//./_}_CONTENTS="usr/bin/cygLLVM-${PV}.dll"
+libllvm3_1_SUMMARY="LLVM library (runtime)"
+libllvm3_1_CONTENTS="usr/bin/cygLLVM-3.1.dll"
+libllvm_devel_SUMMARY="LLVM library (development)"
 libllvm_devel_CONTENTS="usr/bin/llvm-config* usr/include/llvm*
                         usr/lib/libLLVM-*.dll.a usr/share/man/man1/llvm-config*"
 libllvm_devel_static_CONTENTS="--exclude=*.dll.a usr/lib/libllvm* usr/lib/libLLVM*"
+ocaml_llvm_SUMMARY="LLVM library (OCaml bindings)"
 ocaml_llvm_CONTENTS="${OCAML_LIBDIR#/} usr/share/doc/${PN}/ocamldoc*"
+clang_SUMMARY="C/C++/ObjC compiler frontend based on LLVM"
+clang_DESCRIPTION="Clang is an LLVM native C/C++/ObjC compiler, which aims to
+deliver amazingly fast compiles, extremely useful error and warning messages
+and to provide a platform for building great source level tools. The Clang
+Static Analyzer is a tool that automatically finds bugs in your code, and is a
+great example of the sort of tool that can be built using the Clang frontend
+as a library to parse C/C++ code."
+clang_REQUIRES="gcc4-core gcc4-g++"
 clang_CONTENTS="usr/bin/c-* usr/bin/clang* usr/lib/clang/ usr/share/man/man1/clang*"
+clang_analyzer_SUMMARY="C/C++/ObjC code analyzer"
+clang_analyzer_DESCRIPTION=${clang_DESCRIPTION}
+clang_analyzer_REQUIRES="clang"
 clang_analyzer_CONTENTS="usr/bin/scan-* usr/share/clang-analyzer/"
+libclang_SUMMARY="C/C++/ObjC compiler library (runtime)"
+libclang_DESCRIPTION=${clang_DESCRIPTION}
 libclang_CONTENTS="usr/bin/cygclang.dll"
+libclang_devel_SUMMARY="C/C++/ObjC compiler library (development)"
+libclang_devel_DESCRIPTION=${clang_DESCRIPTION}
+libclang_devel_REQUIRES="libllvm-devel"
 libclang_devel_CONTENTS="usr/include/clang-c/ usr/lib/libclang.dll.a"
 libclang_devel_static_CONTENTS="--exclude=*.dll.a usr/include/clang/ usr/lib/libclang*"
+python_clang_SUMMARY="C/C++/ObjC compiler library (Python bindings)"
+python_clang_DESCRIPTION=${clang_DESCRIPTION}
+python_clang_REQUIRES="libclang"  # loaded via ctypes
 python_clang_CONTENTS="${PYTHON_SITELIB#/}/clang/"
+python3_clang_SUMMARY="C/C++/ObjC compiler library (Py3K bindings)"
+python3_clang_DESCRIPTION=${clang_DESCRIPTION}
+python3_clang_REQUIRES="libclang"  # loaded via ctypes
 python3_clang_CONTENTS="${PYTHON3_SITELIB#/}/clang/"
 
 CYGPORT_USE_UNSTABLE_API=1
@@ -79,10 +114,10 @@ src_install() {
 	dopython ${S}/tools/clang/bindings/python/clang/*.py
 	python_optimize
 
-#	python3into clang
-#	dopython ${S}/tools/clang/bindings/python/clang/*.py
-#	2to3 ${D}${PYTHON3_SITELIB}/clang/*.py
-#	python3_optimize
+	python3into clang
+	dopython3 ${S}/tools/clang/bindings/python/clang/*.py
+	2to3-${PYTHON3_VERSION} -n -w ${D}${PYTHON3_SITELIB}/clang/*.py
+	python3_optimize
 
 	find ${D}${OCAML_LIBDIR} -type l -delete
 }
