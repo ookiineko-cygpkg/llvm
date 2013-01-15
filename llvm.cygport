@@ -25,6 +25,7 @@ PATCH_URI="
 	3.1-cygwin-includes.patch
 	3.1-cross-sysroot.patch
 	3.1-cygwin-w32api.patch
+	3.1-cygwin-libdirs.patch
 "
 
 PKG_NAMES="llvm llvm-doc libllvm3.1 libllvm-devel ocaml-llvm

@@ -1,0 +1,40 @@
+--- origsrc/llvm-3.1.src/tools/clang/lib/Driver/Driver.cpp	2012-04-15 23:16:43.000000000 -0500
++++ src/llvm-3.1.src/tools/clang/lib/Driver/Driver.cpp	2013-01-14 18:32:00.429180300 -0600
+@@ -1692,6 +1692,9 @@ const ToolChain &Driver::getToolChain(co
+     case llvm::Triple::Solaris:
+       TC = new toolchains::Solaris(*this, Target, Args);
+       break;
++    case llvm::Triple::Cygwin:
++      TC = new toolchains::Cygwin(*this, Target, Args);
++      break;
+     case llvm::Triple::Win32:
+       TC = new toolchains::Windows(*this, Target);
+       break;
+--- origsrc/llvm-3.1.src/tools/clang/lib/Driver/ToolChains.cpp	2013-01-14 04:51:06.878456000 -0600
++++ src/llvm-3.1.src/tools/clang/lib/Driver/ToolChains.cpp	2013-01-14 18:41:34.808617200 -0600
+@@ -2332,3 +2332,11 @@ Tool &DragonFly::SelectTool(const Compil
+ 
+   return *T;
+ }
++
++/// Cygwin - Cygwin tool chain for x86
++
++Cygwin::Cygwin(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
++  : Generic_GCC(D, Triple, Args) {
++  getFilePaths().push_back("/usr/lib/gcc/i686-pc-cygwin/4.5.3");
++  getFilePaths().push_back("/usr/lib");
++}
+--- origsrc/llvm-3.1.src/tools/clang/lib/Driver/ToolChains.h	2012-04-09 07:33:41.000000000 -0500
++++ src/llvm-3.1.src/tools/clang/lib/Driver/ToolChains.h	2013-01-14 18:35:26.747879400 -0600
+@@ -589,6 +589,11 @@ public:
+ 
+ };
+ 
++class LLVM_LIBRARY_VISIBILITY Cygwin : public Generic_GCC {
++public:
++  Cygwin(const Driver &D, const llvm::Triple& Triple, const ArgList &Args);
++};
++
+ } // end namespace toolchains
+ } // end namespace driver
+ } // end namespace clang
