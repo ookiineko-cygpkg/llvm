@@ -1,0 +1,22 @@
+Change this first hunk when rebuilding for gcc update
+
+--- origsrc/llvm-3.4.2.src/tools/clang/lib/Frontend/InitHeaderSearch.cpp	2013-11-15 12:07:59.000000000 -0600
++++ src/llvm-3.4.2.src/tools/clang/lib/Frontend/InitHeaderSearch.cpp	2014-07-18 14:26:50.858417600 -0500
+@@ -387,6 +387,7 @@ AddDefaultCPlusPlusIncludePaths(const ll
+ 
+   case llvm::Triple::Cygwin:
+     // Cygwin-1.7
++    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.8.3");
+     AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.7.3");
+     AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.5.3");
+     AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.4");
+--- origsrc/llvm-3.4.2.src/tools/clang/lib/Sema/TargetAttributesSema.cpp	2013-10-01 09:34:25.000000000 -0500
++++ src/llvm-3.4.2.src/tools/clang/lib/Sema/TargetAttributesSema.cpp	2014-07-18 00:02:50.234889300 -0500
+@@ -257,6 +257,7 @@ namespace {
+                               const AttributeList &Attr, Sema &S) const {
+       const llvm::Triple &Triple(S.Context.getTargetInfo().getTriple());
+       if (Triple.getOS() == llvm::Triple::Win32 ||
++          Triple.getOS() == llvm::Triple::Cygwin ||
+           Triple.getOS() == llvm::Triple::MinGW32) {
+         switch (Attr.getKind()) {
+         case AttributeList::AT_DLLImport: HandleDLLImportAttr(D, Attr, S);

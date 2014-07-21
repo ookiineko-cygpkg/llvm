@@ -1,6 +1,6 @@
---- origsrc/llvm-2.9/Makefile.rules	2011-03-25 01:26:58.000000000 -0500
-+++ src/llvm-2.9/Makefile.rules	2012-01-04 17:28:51.541900700 -0600
-@@ -1030,6 +1030,9 @@ endif
+--- origsrc/llvm-3.4.2.src/Makefile.rules	2014-05-15 15:56:00.000000000 -0500
++++ src/llvm-3.4.2.src/Makefile.rules	2014-07-18 00:00:53.210529100 -0500
+@@ -1109,6 +1109,9 @@ endif
  ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
  # LLVMLibsOptions is invalidated at processing tools/llvm-shlib.
  SharedLinkOptions += $(NativeExportsFile)
@@ -10,10 +10,10 @@
  endif
  
  endif
-@@ -1173,6 +1176,11 @@ install-local:: $(DestSharedLib)
- $(DestSharedLib): $(LibName.SO) $(DestSharedLibDir)
- 	$(Echo) Installing $(BuildMode) Shared Library $(DestSharedLib)
- 	$(Verb) $(INSTALL) $(LibName.SO) $(DestSharedLib)
+@@ -1204,6 +1207,11 @@ ifdef SHARED_ALIAS
+ 	$(Echo) Creating alias from $(DestSharedLib) to $(DestSharedAlias)
+ 	$(Verb) $(AliasTool) $(BaseLibName.SO) $(DestSharedAlias)
+ endif
 +ifndef LOADABLE_MODULE
 +ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
 +	$(Verb) $(INSTALL) $(SharedLibDir)/lib$(LIBRARYNAME).dll.a $(DESTDIR)$(PROJ_libdir)

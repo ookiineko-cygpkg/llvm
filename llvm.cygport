@@ -1,49 +1,50 @@
-inherit ocaml python python3
+# IMPORTANT:
+# This package MUST be rebuilt for each version of gcc, and the cygwin-clang
+# patched fixed accordingly.
+
+inherit python python3
 
 NAME="llvm"
-VERSION=3.1
-RELEASE=3
-CATEGORY="Interpreters Devel"
+VERSION=3.4.2
+RELEASE=1
+CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
 DESCRIPTION="The LLVM Core libraries provide a modern source- and target-
 independent optimizer, along with code generation support for many popular CPUs
 (as well as some less common ones!) These libraries are built around a well
 specified code representation known as the LLVM intermediate representation."
 HOMEPAGE="http://www.llvm.org/"
-SRC_URI="http://www.llvm.org/releases/${PV}/${P}.src.tar.gz
-         http://www.llvm.org/releases/${PV}/clang-${PV}.src.tar.gz"
-SRC_DIR="${P}.src"
-
+SRC_URI="http://www.llvm.org/releases/${VERSION}/llvm-${VERSION}.src.tar.gz"
+SRC_URI+=" http://www.llvm.org/releases/${VERSION}/cfe-${VERSION}.src.tar.gz"
+SRC_DIR="llvm-${VERSION}.src"
 PATCH_URI="
-	mirror://portage/sys-devel/${PN}/files/${P}-fix_debug_line_info.patch
-	mirror://portage/sys-devel/${PN}/files/${P}-ivybridge_support.patch
-	2.9-implib.patch
-	2.9-python-ctypes.patch
-	3.1-llvm-config.patch
-	3.0-analyzer-realpath.patch
-	3.0-cygwin-dllexport.patch
-	3.1-cygwin-includes.patch
-	3.1-cross-sysroot.patch
-	3.1-cygwin-w32api.patch
-	3.1-cygwin-libdirs.patch
+	3.4.2-llvm-config.patch
+	3.4.2-cygwin-implib.patch
+	3.4.2-cygwin-clang.patch
+	3.4.2-cygwin-ctypes.patch
 "
 
-PKG_NAMES="llvm llvm-doc libllvm3.1 libllvm-devel ocaml-llvm
-           clang clang-analyzer libclang libclang-devel python-clang python3-clang"
+PKG_NAMES="llvm llvm-doc libllvm3.4 libllvm-devel libllvm-devel-static"
+PKG_NAMES+=" clang clang-analyzer libclang libclang-devel libclang-devel-static"
+PKG_NAMES+=" python-clang python3-clang"
+llvm_CATEGORY="Interpreters"
 llvm_CONTENTS="--exclude=cygclang.dll --exclude=clang* --exclude=cygLLVM-*.dll
                --exclude=llvm-config* --exclude=c-*.exe --exclude=scan-*
                --exclude=html* --exclude=ps --exclude=ocamldoc*
-               usr/bin/ usr/share/doc/ usr/share/man/man1/"
+               usr/bin/ usr/share/doc/"
+llvm_doc_CATEGORY="Doc"
 llvm_doc_SUMMARY="LLVM documentation"
 llvm_doc_CONTENTS="usr/share/doc/${PN}/html* usr/share/doc/${PN}/ps/"
-libllvm3_1_SUMMARY="LLVM library (runtime)"
-libllvm3_1_CONTENTS="usr/bin/cygLLVM-3.1.dll"
+libllvm3_4_SUMMARY="LLVM library (runtime)"
+libllvm3_4_CONTENTS="usr/bin/cygLLVM-3.4.dll"
 libllvm_devel_SUMMARY="LLVM library (development)"
-libllvm_devel_CONTENTS="usr/bin/llvm-config* usr/include/llvm*
-                        usr/lib/libLLVM-*.dll.a usr/share/man/man1/llvm-config*"
-libllvm_devel_static_CONTENTS="--exclude=*.dll.a usr/lib/libllvm* usr/lib/libLLVM*"
+libllvm_devel_CONTENTS="usr/bin/llvm-config* usr/include/llvm* usr/lib/libLLVM-*.dll.a"
+libllvm_devel_static_SUMMARY=${llvm_devel_SUMMARY}
+libllvm_devel_static_REQUIRES="libllvm-devel"
+libllvm_devel_static_CONTENTS="--exclude=*.dll.a usr/lib/libLLVM*"
 ocaml_llvm_SUMMARY="LLVM library (OCaml bindings)"
 ocaml_llvm_CONTENTS="${OCAML_LIBDIR#/} usr/share/doc/${PN}/ocamldoc*"
+clang_CATEGORY="Devel"
 clang_SUMMARY="C/C++/ObjC compiler frontend based on LLVM"
 clang_DESCRIPTION="Clang is an LLVM native C/C++/ObjC compiler, which aims to
 deliver amazingly fast compiles, extremely useful error and warning messages
@@ -51,12 +52,13 @@ and to provide a platform for building great source level tools. The Clang
 Static Analyzer is a tool that automatically finds bugs in your code, and is a
 great example of the sort of tool that can be built using the Clang frontend
 as a library to parse C/C++ code."
-clang_REQUIRES="gcc4-core gcc4-g++"
+clang_REQUIRES="gcc-core gcc-g++"
 clang_CONTENTS="usr/bin/c-* usr/bin/clang* usr/lib/clang/ usr/share/man/man1/clang*"
+clang_analyzer_CATEGORY="Devel"
 clang_analyzer_SUMMARY="C/C++/ObjC code analyzer"
 clang_analyzer_DESCRIPTION=${clang_DESCRIPTION}
 clang_analyzer_REQUIRES="clang"
-clang_analyzer_CONTENTS="usr/bin/scan-* usr/share/clang-analyzer/"
+clang_analyzer_CONTENTS="usr/bin/scan-* usr/libexec/clang-analyzer/ usr/share/man/man1/scan-build.*"
 libclang_SUMMARY="C/C++/ObjC compiler library (runtime)"
 libclang_DESCRIPTION=${clang_DESCRIPTION}
 libclang_CONTENTS="usr/bin/cygclang.dll"
@@ -64,6 +66,8 @@ libclang_devel_SUMMARY="C/C++/ObjC compiler library (development)"
 libclang_devel_DESCRIPTION=${clang_DESCRIPTION}
 libclang_devel_REQUIRES="libllvm-devel"
 libclang_devel_CONTENTS="usr/include/clang-c/ usr/lib/libclang.dll.a"
+libclang_devel_static_SUMMARY=${libclang_devel_SUMMARY}
+libclang_devel_static_REQUIRES="libclang-devel"
 libclang_devel_static_CONTENTS="--exclude=*.dll.a usr/include/clang/ usr/lib/libclang*"
 python_clang_SUMMARY="C/C++/ObjC compiler library (Python bindings)"
 python_clang_DESCRIPTION=${clang_DESCRIPTION}
@@ -77,7 +81,7 @@ python3_clang_CONTENTS="${PYTHON3_SITELIB#/}/clang/"
 CYGPORT_USE_UNSTABLE_API=1
 src_unpack_hook() {
 	rm -fr tools/clang
-	mv ../clang-${PV}.src tools/clang
+	mv ../cfe-${VERSION}.src tools/clang
 }
 
 src_compile() {
@@ -85,31 +89,42 @@ src_compile() {
 	CFLAGS=${CFLAGS/-O[0-9]/}
 	CXXFLAGS=${CXXFLAGS/-O[0-9]/}
 
-#	local gccdir=/usr/lib/gcc/i686-pc-cygwin/$(${CC} -dumpversion)
+	local gccdir=/usr/lib/gcc/${ARCH}-pc-cygwin/$(${CC} -dumpversion)
 
 	cd ${B}
 	cygconf --disable-assertions --enable-optimized --enable-debug-runtime \
-		--enable-debug-symbols --enable-targets=all \
+		--enable-debug-symbols --enable-targets=x86,cpp \
 		--enable-libffi --enable-shared --disable-embed-stdcxx \
-		--with-gcc-toolchain=/usr
-#		--with-clang-resource-dir=../lib/clang/i686-pc-cygwin/${PV} \
-#		--with-c-include-dirs=${gccdir}/include:/usr/include:/usr/include/w32api
+		--disable-polly --disable-libcpp \
+		--with-gcc-toolchain=/usr \
+		--with-clang-resource-dir=../lib/clang/${ARCH}-pc-cygwin/${VERSION} \
+		--with-c-include-dirs=${gccdir}/include:/usr/include:/usr/include/w32api
 
 	cygmake REQUIRES_RTTI=1
 }
 
 src_install() {
 	cd ${B}
-	cyginstall PROJ_docsdir=/usr/share/doc/llvm
-#		PROJ_headers=${D}/usr/lib/clang/i686-pc-cygwin/${PV}/include
+	cyginstall PROJ_docsdir=/usr/share/doc/llvm \
+		PROJ_headers=${D}/usr/lib/clang/${ARCH}-pc-cygwin/${VERSION}/include
 
-	dodir /usr/share/clang-analyzer
+	case ${VERSION} in
+	*.*.*)	rm -f ${D}/usr/bin/cygLLVM-${VERSION}.dll
+		dosym libLLVM-${VERSION%.*}.dll.a /usr/lib/libLLVM-${VERSION}.dll.a
+	esac
+
+	dodir /usr/libexec/clang-analyzer
 	for a in scan-build scan-view
 	do
-		cp -r ${S}/tools/clang/tools/$a ${D}/usr/share/clang-analyzer/
-		dosym ../share/clang-analyzer/$a/$a /usr/bin/$a
+		cp -r ${S}/tools/clang/tools/$a ${D}/usr/libexec/clang-analyzer/
+		dosym /usr/libexec/clang-analyzer/$a/$a /usr/bin/$a
 	done
-	python_optimize /usr/share/clang-analyzer
+	doman ${S}/tools/clang/tools/scan-build/scan-build.1
+	rm -f ${D}/usr/libexec/clang-analyzer/scan-build/*.1
+	python_optimize /usr/libexec/clang-analyzer
+
+	dodir /usr/libexec/clang-analyzer/scan-build/bin
+	dosym /usr/bin/clang.exe /usr/libexec/clang-analyzer/scan-build/bin/clang
 
 	pythoninto clang
 	dopython ${S}/tools/clang/bindings/python/clang/*.py
@@ -119,6 +134,4 @@ src_install() {
 	dopython3 ${S}/tools/clang/bindings/python/clang/*.py
 	2to3-${PYTHON3_VERSION} -n -w ${D}${PYTHON3_SITELIB}/clang/*.py
 	python3_optimize
-
-	find ${D}${OCAML_LIBDIR} -type l -delete
 }
