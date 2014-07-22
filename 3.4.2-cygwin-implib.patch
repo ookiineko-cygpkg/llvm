@@ -22,3 +22,27 @@
  
  uninstall-local::
  	$(Echo) Uninstalling $(BuildMode) Shared Library $(DestSharedLib)
+--- origsrc/llvm-3.4.2.src/tools/llvm-shlib/Makefile	2014-05-14 19:15:27.000000000 -0500
++++ src/llvm-3.4.2.src/tools/llvm-shlib/Makefile	2014-07-21 19:24:10.874237900 -0500
+@@ -91,6 +91,10 @@ SHLIB_STUBS := $(addprefix $(ObjDir)/, $
+ SHLIB_FRAGS := $(patsubst %.a.o, $(ObjDir)/%.syms.txt, $(LIBRARYNAME).a.o $(SHLIB_FRAG_NAMES))
+ LLVMLibsOptions := $(SHLIB_STUBS) $(LLVMLibsOptions)
+ 
++ifneq ($(HOST_ARCH), x86_64)
++  SYMBOL_PREFIX = _
++endif  
++
+ $(LibName.SO): $(SHLIB_STUBS)
+ 
+ %.syms.txt: %.a.o
+@@ -100,8 +104,8 @@ $(LibName.SO): $(SHLIB_STUBS)
+ $(ObjDir)/$(LIBRARYNAME).exports: $(SHLIB_FRAGS) $(ObjDir)/.dir
+ 	$(Echo) Generating exports for $(LIBRARYNAME)
+ 	$(Verb) ($(SED) -n \
+-			-e "s/^.* T _\([^.][^.]*\)$$/\1/p" \
+-			-e "s/^.* [BDR] _\([^.][^.]*\)$$/\1 DATA/p" \
++			-e "s/^.* T $(SYMBOL_PREFIX)\([^.][^.]*\)$$/\1/p" \
++			-e "s/^.* [BDR] $(SYMBOL_PREFIX)\([^.][^.]*\)$$/\1 DATA/p" \
+ 			$(SHLIB_FRAGS) \
+ 		 | sort -u) > $@
+ 

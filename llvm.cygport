@@ -6,7 +6,7 @@ inherit python python3
 
 NAME="llvm"
 VERSION=3.4.2
-RELEASE=1
+RELEASE=2
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
 DESCRIPTION="The LLVM Core libraries provide a modern source- and target-
@@ -95,7 +95,7 @@ src_compile() {
 	cygconf --disable-assertions --enable-optimized --enable-debug-runtime \
 		--enable-debug-symbols --enable-targets=x86,cpp \
 		--enable-libffi --enable-shared --disable-embed-stdcxx \
-		--disable-polly --disable-libcpp \
+		--disable-polly --disable-libcpp --enable-bindings=none \
 		--with-gcc-toolchain=/usr \
 		--with-clang-resource-dir=../lib/clang/${ARCH}-pc-cygwin/${VERSION} \
 		--with-c-include-dirs=${gccdir}/include:/usr/include:/usr/include/w32api
