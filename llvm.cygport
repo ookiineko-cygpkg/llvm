@@ -6,7 +6,7 @@ inherit python python3
 
 NAME="llvm"
 VERSION=3.4.2
-RELEASE=2
+RELEASE=3
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
 DESCRIPTION="The LLVM Core libraries provide a modern source- and target-
