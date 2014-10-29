@@ -6,7 +6,7 @@ inherit python python3
 
 NAME="llvm"
 VERSION=3.4.2
-RELEASE=3
+RELEASE=4
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
 DESCRIPTION="The LLVM Core libraries provide a modern source- and target-
@@ -53,7 +53,7 @@ Static Analyzer is a tool that automatically finds bugs in your code, and is a
 great example of the sort of tool that can be built using the Clang frontend
 as a library to parse C/C++ code."
 clang_REQUIRES="gcc-core gcc-g++"
-clang_CONTENTS="usr/bin/c-* usr/bin/clang* usr/lib/clang/ usr/share/man/man1/clang*"
+clang_CONTENTS="usr/bin/c-* usr/bin/clang*.exe usr/bin/clang++ usr/lib/clang/ usr/share/man/man1/clang*"
 clang_analyzer_CATEGORY="Devel"
 clang_analyzer_SUMMARY="C/C++/ObjC code analyzer"
 clang_analyzer_DESCRIPTION=${clang_DESCRIPTION}

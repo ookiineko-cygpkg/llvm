@@ -62,6 +62,18 @@
      case llvm::Triple::MinGW32:
        return new MinGWX86_64TargetInfo(Triple);
      case llvm::Triple::Win32:   // This is what Triple.h supports now.
+--- origsrc/llvm-3.4.2.src/tools/clang/lib/Driver/Tools.cpp	2014-04-11 15:31:24.000000000 -0500
++++ src/llvm-3.4.2.src/tools/clang/lib/Driver/Tools.cpp	2014-08-07 14:43:01.635600000 -0500
+@@ -3293,8 +3293,7 @@ void Clang::ConstructJob(Compilation &C,
+   // -fuse-cxa-atexit is default.
+   if (!Args.hasFlag(
+            options::OPT_fuse_cxa_atexit, options::OPT_fno_use_cxa_atexit,
+-           getToolChain().getTriple().getOS() != llvm::Triple::Cygwin &&
+-               getToolChain().getTriple().getOS() != llvm::Triple::MinGW32 &&
++           getToolChain().getTriple().getOS() != llvm::Triple::MinGW32 &&
+                getToolChain().getArch() != llvm::Triple::hexagon &&
+                getToolChain().getArch() != llvm::Triple::xcore) ||
+       KernelOrKext)
 --- origsrc/llvm-3.4.2.src/tools/clang/lib/Frontend/InitHeaderSearch.cpp	2014-07-28 02:54:31.291587400 -0500
 +++ src/llvm-3.4.2.src/tools/clang/lib/Frontend/InitHeaderSearch.cpp	2014-07-27 19:10:44.000000000 -0500
 @@ -385,14 +385,14 @@ AddDefaultCPlusPlusIncludePaths(const ll
