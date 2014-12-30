@@ -89,8 +89,8 @@
 -    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.4");
 -    // g++-4 / Cygwin-1.5
 -    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.2");
++    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", arch + "-pc-cygwin", "4.9.2");
 +    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", arch + "-pc-cygwin", "4.9.1");
-+    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", arch + "-pc-cygwin", "4.9.0");
 +    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", arch + "-pc-cygwin", "4.8.3");
      break;
 +  }
