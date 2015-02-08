@@ -20,7 +20,7 @@
      DefineStd(Builder, "unix", Opts);
      if (Opts.CPlusPlus)
        Builder.defineMacro("_GNU_SOURCE");
-@@ -3370,6 +3371,32 @@ public:
+@@ -3370,6 +3371,35 @@ public:
  } // end anonymous namespace
  
  namespace {
@@ -40,6 +40,9 @@
 +    DefineStd(Builder, "unix", Opts);
 +    if (Opts.CPlusPlus)
 +      Builder.defineMacro("_GNU_SOURCE");
++  }
++  virtual BuiltinVaListKind getBuiltinVaListKind() const {
++    return TargetInfo::CharPtrBuiltinVaList;
 +  }
 +  virtual CallingConvCheckResult checkCallingConvention(CallingConv CC) const {
 +    return (CC == CC_C ||
