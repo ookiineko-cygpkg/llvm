@@ -1,0 +1,101 @@
+--- origsrc/llvm-3.5.1.src/lib/Target/X86/MCTargetDesc/X86MCTargetDesc.cpp	2014-07-17 11:27:40.000000000 -0500
++++ src/llvm-3.5.1.src/lib/Target/X86/MCTargetDesc/X86MCTargetDesc.cpp	2015-04-30 23:57:03.440469200 -0500
+@@ -340,7 +340,8 @@ static MCCodeGenInfo *createX86MCCodeGen
+ 
+   // For static codegen, if we're not already set, use Small codegen.
+   if (CM == CodeModel::Default)
+-    CM = CodeModel::Small;
++    CM = T.isWindowsCygwinEnvironment() && is64Bit ? CodeModel::Medium
++                                                   : CodeModel::Small;
+   else if (CM == CodeModel::JITDefault)
+     // 64-bit JIT places everything in the same buffer except external funcs.
+     CM = is64Bit ? CodeModel::Large : CodeModel::Small;
+--- origsrc/llvm-3.5.1.src/tools/clang/lib/Basic/Targets.cpp	2014-08-08 17:59:37.000000000 -0500
++++ src/llvm-3.5.1.src/tools/clang/lib/Basic/Targets.cpp	2015-05-01 00:03:14.734617600 -0500
+@@ -3203,6 +3203,7 @@ public:
+     Builder.defineMacro("_X86_");
+     Builder.defineMacro("__CYGWIN__");
+     Builder.defineMacro("__CYGWIN32__");
++    Builder.defineMacro("__declspec(a)", "__attribute__((a))");
+     DefineStd(Builder, "unix", Opts);
+     if (Opts.CPlusPlus)
+       Builder.defineMacro("_GNU_SOURCE");
+@@ -3409,6 +3410,35 @@ public:
+ } // end anonymous namespace
+ 
+ namespace {
++// x86-64 Cygwin target
++class CygwinX86_64TargetInfo : public X86_64TargetInfo {
++public:
++  CygwinX86_64TargetInfo(const llvm::Triple &Triple)
++      : X86_64TargetInfo(Triple) {
++    TLSSupported = false;
++    WCharType = UnsignedShort;
++  }
++  virtual void getTargetDefines(const LangOptions &Opts,
++                                MacroBuilder &Builder) const {
++    X86_64TargetInfo::getTargetDefines(Opts, Builder);
++    Builder.defineMacro("__CYGWIN__");
++    Builder.defineMacro("__declspec(a)", "__attribute__((a))");
++    DefineStd(Builder, "unix", Opts);
++    if (Opts.CPlusPlus)
++      Builder.defineMacro("_GNU_SOURCE");
++  }
++  virtual BuiltinVaListKind getBuiltinVaListKind() const {
++    return TargetInfo::CharPtrBuiltinVaList;
++  }
++  virtual CallingConvCheckResult checkCallingConvention(CallingConv CC) const {
++    return (CC == CC_C ||
++            CC == CC_IntelOclBicc ||
++            CC == CC_X86_64SysV) ? CCCR_OK : CCCR_Warning;
++  }
++};
++} // end anonymous namespace
++
++namespace {
+ class DarwinX86_64TargetInfo : public DarwinTargetInfo<X86_64TargetInfo> {
+ public:
+   DarwinX86_64TargetInfo(const llvm::Triple &Triple)
+@@ -6357,6 +6387,8 @@ static TargetInfo *AllocateTarget(const
+       switch (Triple.getEnvironment()) {
+       default:
+         return new X86_64TargetInfo(Triple);
++      case llvm::Triple::Cygnus:
++        return new CygwinX86_64TargetInfo(Triple);
+       case llvm::Triple::GNU:
+         return new MinGWX86_64TargetInfo(Triple);
+       case llvm::Triple::MSVC:
+--- origsrc/llvm-3.5.1.src/tools/clang/lib/Driver/Tools.cpp	2014-08-06 23:51:51.000000000 -0500
++++ src/llvm-3.5.1.src/tools/clang/lib/Driver/Tools.cpp	2015-05-01 00:00:53.669704600 -0500
+@@ -3887,7 +3887,7 @@ void Clang::ConstructJob(Compilation &C,
+   // -fuse-cxa-atexit is default.
+   if (!Args.hasFlag(options::OPT_fuse_cxa_atexit,
+                     options::OPT_fno_use_cxa_atexit,
+-                    !IsWindowsCygnus && !IsWindowsGNU &&
++                    !IsWindowsGNU &&
+                     getToolChain().getArch() != llvm::Triple::hexagon &&
+                     getToolChain().getArch() != llvm::Triple::xcore) ||
+       KernelOrKext)
+--- origsrc/llvm-3.5.1.src/tools/clang/lib/Frontend/InitHeaderSearch.cpp	2014-06-10 16:07:12.000000000 -0500
++++ src/llvm-3.5.1.src/tools/clang/lib/Frontend/InitHeaderSearch.cpp	2015-05-01 00:05:18.171792100 -0500
+@@ -395,14 +395,13 @@ AddDefaultCPlusPlusIncludePaths(const ll
+   case llvm::Triple::Win32:
+     switch (triple.getEnvironment()) {
+     default: llvm_unreachable("Include management is handled in the driver.");
+-    case llvm::Triple::Cygnus:
+-      // Cygwin-1.7
+-      AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.7.3");
+-      AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.5.3");
+-      AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.4");
+-      // g++-4 / Cygwin-1.5
+-      AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.2");
++    case llvm::Triple::Cygnus: {
++      std::string arch = triple.getArch() == llvm::Triple::x86_64 ? "x86_64" : "i686";
++      AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", arch + "-pc-cygwin", "4.9.3");
++      AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", arch + "-pc-cygwin", "4.9.2");
++      AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", arch + "-pc-cygwin", "4.8.3");
+       break;
++    }
+     case llvm::Triple::GNU:
+       // mingw-w64 C++ include paths (i686-w64-mingw32 and x86_64-w64-mingw32)
+       AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.7.0");

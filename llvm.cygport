@@ -1,12 +1,12 @@
 # IMPORTANT:
-# This package MUST be rebuilt for each version of gcc, and the cygwin-clang
-# patched fixed accordingly.
+# This package MUST be rebuilt for each version of gcc, and the
+# cygwin-clang.patch fixed accordingly.
 
 inherit python python3
 
 NAME="llvm"
-VERSION=3.4.2
-RELEASE=5
+VERSION=3.5.1
+RELEASE=1
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
 DESCRIPTION="The LLVM Core libraries provide a modern source- and target-
@@ -14,17 +14,17 @@ independent optimizer, along with code generation support for many popular CPUs
 (as well as some less common ones!) These libraries are built around a well
 specified code representation known as the LLVM intermediate representation."
 HOMEPAGE="http://www.llvm.org/"
-SRC_URI="http://www.llvm.org/releases/${VERSION}/llvm-${VERSION}.src.tar.gz"
-SRC_URI+=" http://www.llvm.org/releases/${VERSION}/cfe-${VERSION}.src.tar.gz"
+SRC_URI="http://www.llvm.org/releases/${VERSION}/llvm-${VERSION}.src.tar.xz"
+SRC_URI+=" http://www.llvm.org/releases/${VERSION}/cfe-${VERSION}.src.tar.xz"
 SRC_DIR="llvm-${VERSION}.src"
 PATCH_URI="
 	3.4.2-llvm-config.patch
 	3.4.2-cygwin-implib.patch
-	3.4.2-cygwin-clang.patch
+	3.5.1-cygwin-clang.patch
 	3.4.2-cygwin-ctypes.patch
 "
 
-PKG_NAMES="llvm llvm-doc libllvm3.4 libllvm-devel libllvm-devel-static"
+PKG_NAMES="llvm llvm-doc libllvm3.5 libllvm-devel libllvm-devel-static"
 PKG_NAMES+=" clang clang-analyzer libclang libclang-devel libclang-devel-static"
 PKG_NAMES+=" python-clang python3-clang"
 llvm_CATEGORY="Interpreters"
@@ -35,8 +35,8 @@ llvm_CONTENTS="--exclude=cygclang.dll --exclude=clang* --exclude=cygLLVM-*.dll
 llvm_doc_CATEGORY="Doc"
 llvm_doc_SUMMARY="LLVM documentation"
 llvm_doc_CONTENTS="usr/share/doc/${PN}/html* usr/share/doc/${PN}/ps/"
-libllvm3_4_SUMMARY="LLVM library (runtime)"
-libllvm3_4_CONTENTS="usr/bin/cygLLVM-3.4.dll"
+libllvm3_5_SUMMARY="LLVM library (runtime)"
+libllvm3_5_CONTENTS="usr/bin/cygLLVM-3.5.dll"
 libllvm_devel_SUMMARY="LLVM library (development)"
 libllvm_devel_CONTENTS="usr/bin/llvm-config* usr/include/llvm* usr/lib/libLLVM-*.dll.a"
 libllvm_devel_static_SUMMARY=${llvm_devel_SUMMARY}
