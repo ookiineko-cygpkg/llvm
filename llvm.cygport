@@ -38,7 +38,7 @@ llvm_doc_CONTENTS="usr/share/doc/${PN}/html* usr/share/doc/${PN}/ps/"
 libllvm3_5_SUMMARY="LLVM library (runtime)"
 libllvm3_5_CONTENTS="usr/bin/cygLLVM-3.5.dll"
 libllvm_devel_SUMMARY="LLVM library (development)"
-libllvm_devel_CONTENTS="usr/bin/llvm-config* usr/include/llvm* usr/lib/libLLVM-*.dll.a"
+libllvm_devel_CONTENTS="usr/bin/llvm-config* usr/include/llvm* usr/lib/libLLVM-*.dll.a usr/share/llvm/cmake/"
 libllvm_devel_static_SUMMARY=${llvm_devel_SUMMARY}
 libllvm_devel_static_REQUIRES="libllvm-devel"
 libllvm_devel_static_CONTENTS="--exclude=*.dll.a usr/lib/libLLVM*"
