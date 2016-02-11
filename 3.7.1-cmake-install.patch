@@ -1,0 +1,13 @@
+--- origsrc/llvm-3.7.1.src/cmake/modules/AddLLVM.cmake	2015-07-14 00:12:53.000000000 -0500
++++ src/llvm-3.7.1.src/cmake/modules/AddLLVM.cmake	2016-02-10 16:04:13.878528100 -0600
+@@ -516,7 +516,9 @@ macro(add_llvm_library name)
+ 
+       install(TARGETS ${name}
+             EXPORT LLVMExports
+-            ${install_type} DESTINATION lib${LLVM_LIBDIR_SUFFIX}
++            LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
++            ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX}
++            RUNTIME DESTINATION bin
+             COMPONENT ${name})
+ 
+       if (NOT CMAKE_CONFIGURATION_TYPES)

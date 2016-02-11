@@ -1,0 +1,12 @@
+--- origsrc/llvm-3.7.1.src/lib/Target/X86/MCTargetDesc/X86MCTargetDesc.cpp	2015-07-10 17:43:42.000000000 -0500
++++ src/llvm-3.7.1.src/lib/Target/X86/MCTargetDesc/X86MCTargetDesc.cpp	2016-02-10 15:49:57.612796200 -0600
+@@ -191,7 +191,8 @@ static MCCodeGenInfo *createX86MCCodeGen
+ 
+   // For static codegen, if we're not already set, use Small codegen.
+   if (CM == CodeModel::Default)
+-    CM = CodeModel::Small;
++    CM = TT.isWindowsCygwinEnvironment() && is64Bit ? CodeModel::Medium
++                                                   : CodeModel::Small;
+   else if (CM == CodeModel::JITDefault)
+     // 64-bit JIT places everything in the same buffer except external funcs.
+     CM = is64Bit ? CodeModel::Large : CodeModel::Small;
