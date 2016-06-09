@@ -2,7 +2,7 @@ inherit cmake
 
 NAME="llvm"
 VERSION=3.7.1
-RELEASE=1
+RELEASE=2
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
 DESCRIPTION="The LLVM Core libraries provide a modern source- and target-
@@ -15,6 +15,9 @@ SRC_DIR="llvm-${VERSION}.src"
 PATCH_URI="
 	3.7.1-cmake-install.patch
 	3.7.1-cmodel-medium.patch
+	0001-RuntimeDyld-add-COFF-i386-support.patch
+	0002-Backport-RuntimeDyldCOFFI386.h-to-3.7.1.patch
+	0003-Fix-RuntimeDyldCOFFI386-to-handle-relocations-with-a.patch
 "
 
 PKG_NAMES="llvm llvm-doc libllvm3.7 libllvm-devel"

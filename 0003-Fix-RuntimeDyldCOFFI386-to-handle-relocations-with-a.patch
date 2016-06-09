@@ -1,0 +1,60 @@
+From 459041a4b4654ddac6eb1eb58921287007787a7a Mon Sep 17 00:00:00 2001
+From: Jon Turney <jon.turney@dronecode.org.uk>
+Date: Thu, 9 Jun 2016 02:38:56 +0000
+Subject: [PATCH 3/3] Fix RuntimeDyldCOFFI386 to handle relocations with a
+ non-zero offset
+
+---
+ .../RuntimeDyld/Targets/RuntimeDyldCOFFI386.h      | 23 ++++++++++++++++++++--
+ 1 file changed, 21 insertions(+), 2 deletions(-)
+
+diff --git a/lib/ExecutionEngine/RuntimeDyld/Targets/RuntimeDyldCOFFI386.h b/lib/ExecutionEngine/RuntimeDyld/Targets/RuntimeDyldCOFFI386.h
+index 1ea1844..23440c2 100644
+--- a/lib/ExecutionEngine/RuntimeDyld/Targets/RuntimeDyldCOFFI386.h
++++ b/lib/ExecutionEngine/RuntimeDyld/Targets/RuntimeDyldCOFFI386.h
+@@ -54,13 +54,32 @@ public:
+     uint64_t RelType = RelI->getType();
+     uint64_t Offset = RelI->getOffset();
+ 
++    // Determine the Addend used to adjust the relocation value.
++    uint64_t Addend = 0;
++
++    switch (RelType) {
++    case COFF::IMAGE_REL_I386_DIR32:
++    case COFF::IMAGE_REL_I386_DIR32NB:
++    case COFF::IMAGE_REL_I386_REL32: {
++        SectionEntry &AddendSection = Sections[SectionID];
++        uintptr_t ObjTarget = AddendSection.ObjAddress + Offset;
++        uint8_t *Displacement = (uint8_t *)ObjTarget;
++        Addend = readBytesUnaligned(Displacement, 4);
++        break;
++      }
++
++      default:
++        // XXX: does anything need doing for other relocation types
++        break;
++      }
++
+ #if !defined(NDEBUG)
+     SmallString<32> RelTypeName;
+     RelI->getTypeName(RelTypeName);
+ #endif
+     DEBUG(dbgs() << "\t\tIn Section " << SectionID << " Offset " << Offset
+                  << " RelType: " << RelTypeName << " TargetName: " << TargetName
+-                 << "\n");
++                 << " Addend " << Addend << "\n");
+ 
+     unsigned TargetSectionID = -1;
+     if (Section == Obj.section_end()) {
+@@ -78,7 +97,7 @@ public:
+       case COFF::IMAGE_REL_I386_DIR32NB:
+       case COFF::IMAGE_REL_I386_REL32: {
+         RelocationEntry RE =
+-            RelocationEntry(SectionID, Offset, RelType, 0, TargetSectionID,
++            RelocationEntry(SectionID, Offset, RelType, Addend, TargetSectionID,
+                             getSymbolOffset(*Symbol), 0, 0, false, 0);
+         addRelocationForSection(RE, TargetSectionID);
+         break;
+-- 
+2.8.3
+

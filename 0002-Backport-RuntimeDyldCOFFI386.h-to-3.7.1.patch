@@ -1,0 +1,26 @@
+From a548408fa474ed7963059ef62dc0d50c319a9aeb Mon Sep 17 00:00:00 2001
+From: Jon Turney <jon.turney@dronecode.org.uk>
+Date: Thu, 9 Jun 2016 02:16:24 +0000
+Subject: [PATCH 2/3] Backport RuntimeDyldCOFFI386.h to 3.7.1
+
+---
+ lib/ExecutionEngine/RuntimeDyld/Targets/RuntimeDyldCOFFI386.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/lib/ExecutionEngine/RuntimeDyld/Targets/RuntimeDyldCOFFI386.h b/lib/ExecutionEngine/RuntimeDyld/Targets/RuntimeDyldCOFFI386.h
+index 1676c0d..1ea1844 100644
+--- a/lib/ExecutionEngine/RuntimeDyld/Targets/RuntimeDyldCOFFI386.h
++++ b/lib/ExecutionEngine/RuntimeDyld/Targets/RuntimeDyldCOFFI386.h
+@@ -48,7 +48,8 @@ public:
+       report_fatal_error(EC.message());
+     StringRef TargetName = *TargetNameOrErr;
+ 
+-    auto Section = *Symbol->getSection();
++    section_iterator Section(Obj.section_end());
++    Symbol->getSection(Section);
+ 
+     uint64_t RelType = RelI->getType();
+     uint64_t Offset = RelI->getOffset();
+-- 
+2.8.3
+
