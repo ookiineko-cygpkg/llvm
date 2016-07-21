@@ -4,7 +4,7 @@
  
        install(TARGETS ${name}
              EXPORT LLVMExports
--            ${install_type} DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+-            ${install_type} DESTINATION ${install_dir}
 +            LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
 +            ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX}
 +            RUNTIME DESTINATION bin

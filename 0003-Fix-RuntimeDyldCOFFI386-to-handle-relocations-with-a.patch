@@ -24,7 +24,7 @@ index 1ea1844..23440c2 100644
 +    case COFF::IMAGE_REL_I386_DIR32NB:
 +    case COFF::IMAGE_REL_I386_REL32: {
 +        SectionEntry &AddendSection = Sections[SectionID];
-+        uintptr_t ObjTarget = AddendSection.ObjAddress + Offset;
++        uintptr_t ObjTarget = AddendSection.getObjAddress() + Offset;
 +        uint8_t *Displacement = (uint8_t *)ObjTarget;
 +        Addend = readBytesUnaligned(Displacement, 4);
 +        break;

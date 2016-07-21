@@ -1,8 +1,8 @@
 inherit cmake
 
 NAME="llvm"
-VERSION=3.7.1
-RELEASE=2
+VERSION=3.8.1
+RELEASE=1
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
 DESCRIPTION="The LLVM Core libraries provide a modern source- and target-
@@ -15,12 +15,11 @@ SRC_DIR="llvm-${VERSION}.src"
 PATCH_URI="
 	3.7.1-cmake-install.patch
 	3.7.1-cmodel-medium.patch
-	0001-RuntimeDyld-add-COFF-i386-support.patch
-	0002-Backport-RuntimeDyldCOFFI386.h-to-3.7.1.patch
 	0003-Fix-RuntimeDyldCOFFI386-to-handle-relocations-with-a.patch
+	3.8.0-shlib-build.patch
 "
 
-PKG_NAMES="llvm llvm-doc libllvm3.7 libllvm-devel"
+PKG_NAMES="llvm llvm-doc libllvm3.8 libllvm-devel"
 llvm_CATEGORY="Interpreters"
 llvm_CONTENTS="--exclude=cygLLVM*.dll --exclude=llvm-config* --exclude=llvm-tblgen*
                --exclude=html* --exclude=ps --exclude=ocamldoc*
@@ -28,15 +27,19 @@ llvm_CONTENTS="--exclude=cygLLVM*.dll --exclude=llvm-config* --exclude=llvm-tblg
 llvm_doc_CATEGORY="Doc"
 llvm_doc_SUMMARY="LLVM documentation"
 llvm_doc_CONTENTS="usr/share/doc/llvm/html/"
-libllvm3_7_SUMMARY="LLVM library (runtime)"
-libllvm3_7_CONTENTS="usr/bin/cygLLVM*-3.7.dll"
+libllvm3_8_SUMMARY="LLVM library (runtime)"
+libllvm3_8_CONTENTS="usr/bin/cygLLVM-3.8.dll"
 libllvm_devel_SUMMARY="LLVM library (development)"
 libllvm_devel_REQUIRES="llvm"
 libllvm_devel_OBSOLETES="libllvm-devel-static"
 libllvm_devel_CONTENTS="
-	usr/bin/llvm-config* usr/bin/llvm-tblgen*
-	usr/include/llvm* usr/lib/libLLVM*.dll.a
-	usr/share/llvm/cmake/ usr/share/man/man1/llvm-config*
+	usr/bin/llvm-config*
+	usr/bin/llvm-tblgen*
+	usr/include/llvm*
+	usr/lib/libLLVM*.a
+	usr/share/llvm/cmake/
+	usr/share/man/man1/llvm-config*
+	usr/share/man/man1/llvm-tblgen*
 "
 ocaml_llvm_SUMMARY="LLVM library (OCaml bindings)"
 ocaml_llvm_CONTENTS="${OCAML_LIBDIR#/} usr/share/doc/${PN}/ocamldoc*"
@@ -48,7 +51,7 @@ src_compile() {
 
 	cd ${B}
 	cygcmake \
-		-DBUILD_SHARED_LIBS=ON \
+		-DLLVM_TARGETS_TO_BUILD="X86;AMDGPU;NVPTX;BPF;CppBackend" \
 		-DLLVM_ENABLE_LIBCXX=OFF \
 		-DLLVM_ENABLE_ZLIB=ON \
 		-DLLVM_ENABLE_FFI=ON \
@@ -60,15 +63,21 @@ src_compile() {
 		-DLLVM_INCLUDE_UTILS=ON -DLLVM_BUILD_UTILS=OFF \
 		-DLLVM_INCLUDE_DOCS=ON -DLLVM_BUILD_DOCS=ON \
 		-DLLVM_ENABLE_SPHINX=ON -DLLVM_ENABLE_DOXYGEN=OFF \
-		-DLLVM_BUILD_LLVM_DYLIB=OFF \
+		-DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON \
 		-DLLVM_BUILD_EXTERNAL_COMPILER_RT=OFF
 	cygmake
 	cygmake docs-llvm-html docs-llvm-man
+	mv docs/man/{,llvm-}tblgen.1
 }
 
 src_install() {
 	cd ${B}
 	cyginstall
+
+	dosym libLLVM-${VERSION%.*}.dll.a /usr/lib/libLLVM-${VERSION}.dll.a
+	# remove bogus symlinks
+	rm -f ${D}/usr/lib/*.dll
+	popd
 
 	dodoc docs/html/
 	doman docs/man/*
