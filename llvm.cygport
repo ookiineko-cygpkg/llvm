@@ -1,7 +1,7 @@
 inherit cmake
 
 NAME="llvm"
-VERSION=3.8.1
+VERSION=3.9.1
 RELEASE=1
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
@@ -15,11 +15,10 @@ SRC_DIR="llvm-${VERSION}.src"
 PATCH_URI="
 	3.7.1-cmake-install.patch
 	3.7.1-cmodel-medium.patch
-	0003-Fix-RuntimeDyldCOFFI386-to-handle-relocations-with-a.patch
 	3.8.0-shlib-build.patch
 "
 
-PKG_NAMES="llvm llvm-doc libllvm3.8 libllvm-devel"
+PKG_NAMES="llvm llvm-doc libllvm3.9 libllvm-devel"
 llvm_CATEGORY="Interpreters"
 llvm_CONTENTS="--exclude=cygLLVM*.dll --exclude=llvm-config* --exclude=llvm-tblgen*
                --exclude=html* --exclude=ps --exclude=ocamldoc*
@@ -27,8 +26,8 @@ llvm_CONTENTS="--exclude=cygLLVM*.dll --exclude=llvm-config* --exclude=llvm-tblg
 llvm_doc_CATEGORY="Doc"
 llvm_doc_SUMMARY="LLVM documentation"
 llvm_doc_CONTENTS="usr/share/doc/llvm/html/"
-libllvm3_8_SUMMARY="LLVM library (runtime)"
-libllvm3_8_CONTENTS="usr/bin/cygLLVM-3.8.dll"
+libllvm3_9_SUMMARY="LLVM library (runtime)"
+libllvm3_9_CONTENTS="usr/bin/cygLLVM-3.9.dll"
 libllvm_devel_SUMMARY="LLVM library (development)"
 libllvm_devel_REQUIRES="llvm"
 libllvm_devel_OBSOLETES="libllvm-devel-static"
@@ -36,8 +35,8 @@ libllvm_devel_CONTENTS="
 	usr/bin/llvm-config*
 	usr/bin/llvm-tblgen*
 	usr/include/llvm*
+	usr/lib/cmake/llvm/
 	usr/lib/libLLVM*.a
-	usr/share/llvm/cmake/
 	usr/share/man/man1/llvm-config*
 	usr/share/man/man1/llvm-tblgen*
 "
@@ -51,7 +50,7 @@ src_compile() {
 
 	cd ${B}
 	cygcmake \
-		-DLLVM_TARGETS_TO_BUILD="X86;AMDGPU;NVPTX;BPF;CppBackend" \
+		-DLLVM_TARGETS_TO_BUILD="X86;AMDGPU;NVPTX;BPF" \
 		-DLLVM_ENABLE_LIBCXX=OFF \
 		-DLLVM_ENABLE_ZLIB=ON \
 		-DLLVM_ENABLE_FFI=ON \
