@@ -1,7 +1,7 @@
 inherit cmake
 
 NAME="llvm"
-VERSION=3.9.1
+VERSION=4.0.1
 RELEASE=1
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
@@ -13,12 +13,14 @@ HOMEPAGE="http://www.llvm.org/"
 SRC_URI="http://www.llvm.org/releases/${VERSION}/llvm-${VERSION}.src.tar.xz"
 SRC_DIR="llvm-${VERSION}.src"
 PATCH_URI="
-	3.7.1-cmake-install.patch
+	http://pkgs.fedoraproject.org/cgit/rpms/llvm.git/plain/0001-CMake-Split-static-library-exports-into-their-own-ex.patch
+	4.0.1-cmake-install.patch
 	3.7.1-cmodel-medium.patch
-	3.8.0-shlib-build.patch
+	4.0.1-llvm-config.patch
+	4.0.1-shlib-build.patch
 "
 
-PKG_NAMES="llvm llvm-doc libllvm3.9 libllvm-devel"
+PKG_NAMES="llvm llvm-doc libllvm4.0 libllvm-devel libllvm-devel-static"
 llvm_CATEGORY="Interpreters"
 llvm_CONTENTS="--exclude=cygLLVM*.dll --exclude=llvm-config* --exclude=llvm-tblgen*
                --exclude=html* --exclude=ps --exclude=ocamldoc*
@@ -26,19 +28,25 @@ llvm_CONTENTS="--exclude=cygLLVM*.dll --exclude=llvm-config* --exclude=llvm-tblg
 llvm_doc_CATEGORY="Doc"
 llvm_doc_SUMMARY="LLVM documentation"
 llvm_doc_CONTENTS="usr/share/doc/llvm/html/"
-libllvm3_9_SUMMARY="LLVM library (runtime)"
-libllvm3_9_CONTENTS="usr/bin/cygLLVM-3.9.dll"
+libllvm4_0_SUMMARY="LLVM library (runtime)"
+libllvm4_0_CONTENTS="usr/bin/cygLLVM-4.0.dll"
 libllvm_devel_SUMMARY="LLVM library (development)"
 libllvm_devel_REQUIRES="llvm"
-libllvm_devel_OBSOLETES="libllvm-devel-static"
 libllvm_devel_CONTENTS="
+	--exclude=LLVMStaticExports*.cmake
 	usr/bin/llvm-config*
 	usr/bin/llvm-tblgen*
 	usr/include/llvm*
 	usr/lib/cmake/llvm/
-	usr/lib/libLLVM*.a
+	usr/lib/libLLVM-*.dll.a
 	usr/share/man/man1/llvm-config*
 	usr/share/man/man1/llvm-tblgen*
+"
+libllvm_devel_static_SUMMARY="LLVM library (static libraries)"
+libllvm_devel_static_REQUIRES="libllvm-devel"
+libllvm_devel_static_CONTENTS="
+	usr/lib/cmake/llvm/LLVMStaticExports*.cmake
+	usr/lib/libLLVM[A-Za-z]*.a
 "
 ocaml_llvm_SUMMARY="LLVM library (OCaml bindings)"
 ocaml_llvm_CONTENTS="${OCAML_LIBDIR#/} usr/share/doc/${PN}/ocamldoc*"
