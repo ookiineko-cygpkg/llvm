@@ -1,7 +1,7 @@
-inherit cmake
+inherit ocaml cmake
 
 NAME="llvm"
-VERSION=4.0.1
+VERSION=5.0.1
 RELEASE=1
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
@@ -14,22 +14,32 @@ SRC_URI="http://www.llvm.org/releases/${VERSION}/llvm-${VERSION}.src.tar.xz"
 SRC_DIR="llvm-${VERSION}.src"
 PATCH_URI="
 	http://pkgs.fedoraproject.org/cgit/rpms/llvm.git/plain/0001-CMake-Split-static-library-exports-into-their-own-ex.patch
+	http://pkgs.fedoraproject.org/cgit/rpms/llvm.git/plain/0001-Revert-Add-a-linker-script-to-version-LLVM-symbols.patch
 	4.0.1-cmake-install.patch
 	3.7.1-cmodel-medium.patch
 	4.0.1-llvm-config.patch
-	4.0.1-shlib-build.patch
+	5.0.1-shlib-build.patch
 "
 
-PKG_NAMES="llvm llvm-doc libllvm4.0 libllvm-devel libllvm-devel-static"
+PKG_NAMES="llvm llvm-doc libllvm5.0 libllvm-devel libllvm-devel-static
+	ocaml-llvm ocaml-llvm-doc"
 llvm_CATEGORY="Interpreters"
-llvm_CONTENTS="--exclude=cygLLVM*.dll --exclude=llvm-config* --exclude=llvm-tblgen*
-               --exclude=html* --exclude=ps --exclude=ocamldoc*
-               usr/bin/ usr/share/doc/ usr/share/man/man1/"
+llvm_CONTENTS="
+	--exclude=cygLLVM*.dll
+	--exclude=llvm-config*
+	--exclude=llvm-tblgen*
+	--exclude=html
+	--exclude=ocaml-html
+	usr/bin/
+	usr/share/doc/${NAME}
+	usr/share/man/man1/
+	usr/share/opt-viewer/
+"
 llvm_doc_CATEGORY="Doc"
 llvm_doc_SUMMARY="LLVM documentation"
 llvm_doc_CONTENTS="usr/share/doc/llvm/html/"
-libllvm4_0_SUMMARY="LLVM library (runtime)"
-libllvm4_0_CONTENTS="usr/bin/cygLLVM-4.0.dll"
+libllvm5_0_SUMMARY="LLVM library (runtime)"
+libllvm5_0_CONTENTS="usr/bin/cygLLVM-5.0.dll"
 libllvm_devel_SUMMARY="LLVM library (development)"
 libllvm_devel_REQUIRES="llvm"
 libllvm_devel_CONTENTS="
@@ -49,7 +59,10 @@ libllvm_devel_static_CONTENTS="
 	usr/lib/libLLVM[A-Za-z]*.a
 "
 ocaml_llvm_SUMMARY="LLVM library (OCaml bindings)"
-ocaml_llvm_CONTENTS="${OCAML_LIBDIR#/} usr/share/doc/${PN}/ocamldoc*"
+ocaml_llvm_CONTENTS="${OCAML_LIBDIR#/}"
+ocaml_llvm_doc_CATEGORY="Doc"
+ocaml_llvm_doc_SUMMARY=${ocaml_llvm_SUMMARY}
+ocaml_llvm_doc_CONTENTS="usr/share/doc/${PN}/ocaml-html/"
 
 src_compile() {
 	# leave optimization to build system, fails to dlopen with -O2
@@ -58,6 +71,8 @@ src_compile() {
 
 	cd ${B}
 	cygcmake \
+		${ARCH_i686+-DCMAKE_C_FLAGS_RELWITHDEBINFO="-O2 -g1 -DNDEBUG"} \
+		${ARCH_i686+-DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-O2 -g1 -DNDEBUG"} \
 		-DLLVM_TARGETS_TO_BUILD="X86;AMDGPU;NVPTX;BPF" \
 		-DLLVM_ENABLE_LIBCXX=OFF \
 		-DLLVM_ENABLE_ZLIB=ON \
@@ -69,11 +84,12 @@ src_compile() {
 		-DLLVM_INCLUDE_EXAMPLES=ON -DLLVM_BUILD_EXAMPLES=OFF \
 		-DLLVM_INCLUDE_UTILS=ON -DLLVM_BUILD_UTILS=OFF \
 		-DLLVM_INCLUDE_DOCS=ON -DLLVM_BUILD_DOCS=ON \
-		-DLLVM_ENABLE_SPHINX=ON -DLLVM_ENABLE_DOXYGEN=OFF \
+		-DLLVM_ENABLE_SPHINX=ON -DSPHINX_WARNINGS_AS_ERRORS=OFF \
+		-DLLVM_ENABLE_DOXYGEN=OFF \
 		-DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON \
 		-DLLVM_BUILD_EXTERNAL_COMPILER_RT=OFF
 	cygmake
-	cygmake docs-llvm-html docs-llvm-man
+	cygmake ocaml_doc
 	mv docs/man/{,llvm-}tblgen.1
 }
 
@@ -84,8 +100,4 @@ src_install() {
 	dosym libLLVM-${VERSION%.*}.dll.a /usr/lib/libLLVM-${VERSION}.dll.a
 	# remove bogus symlinks
 	rm -f ${D}/usr/lib/*.dll
-	popd
-
-	dodoc docs/html/
-	doman docs/man/*
 }

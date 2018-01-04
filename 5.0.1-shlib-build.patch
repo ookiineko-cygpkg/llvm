@@ -1,0 +1,23 @@
+--- origsrc/llvm-5.0.1.src/tools/llvm-shlib/CMakeLists.txt	2017-12-30 22:14:31.612500700 -0600
++++ src/llvm-5.0.1.src/tools/llvm-shlib/CMakeLists.txt	2017-12-30 22:16:21.347437300 -0600
+@@ -37,7 +37,7 @@ endif()
+ add_llvm_library(LLVM SHARED DISABLE_LLVM_LINK_LLVM_DYLIB SONAME ${SOURCES})
+ 
+ list(REMOVE_DUPLICATES LIB_NAMES)
+-if(("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") OR (MINGW) OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD") OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "DragonFly")) # FIXME: It should be "GNU ld for elf"
++if(("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") OR (CYGWIN) OR (MINGW) OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD") OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "DragonFly")) # FIXME: It should be "GNU ld"
+   # GNU ld doesn't resolve symbols in the version script.
+   set(LIB_NAMES -Wl,--whole-archive ${LIB_NAMES} -Wl,--no-whole-archive)
+ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+--- origsrc/llvm-5.0.1.src/lib/Testing/Support/CMakeLists.txt	2017-06-14 11:41:50.000000000 -0500
++++ src/llvm-5.0.1.src/lib/Testing/Support/CMakeLists.txt	2017-12-31 03:54:15.252359100 -0600
+@@ -1,6 +1,9 @@
+ add_llvm_library(LLVMTestingSupport
+   Error.cpp
+ 
++  LINK_COMPONENTS
++  Support
++
+   BUILDTREE_ONLY
+   
+   ADDITIONAL_HEADER_DIRS
