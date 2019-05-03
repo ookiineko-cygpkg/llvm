@@ -1,0 +1,30 @@
+--- origsrc/llvm-6.0.0.src/lib/Target/X86/X86TargetMachine.cpp	2018-02-02 04:49:53.000000000 -0600
++++ src/llvm-6.0.0.src/lib/Target/X86/X86TargetMachine.cpp	2018-04-29 23:17:21.287037500 -0500
+@@ -187,12 +187,16 @@ static Reloc::Model getEffectiveRelocMod
+   return *RM;
+ }
+ 
+-static CodeModel::Model getEffectiveCodeModel(Optional<CodeModel::Model> CM,
+-                                              bool JIT, bool Is64Bit) {
++static CodeModel::Model getEffectiveCodeModel(const Triple &TT,
++                                              Optional<CodeModel::Model> CM,
++                                              bool JIT) {
++  bool Is64Bit = TT.getArch() == Triple::x86_64;
+   if (CM)
+     return *CM;
+   if (JIT)
+     return Is64Bit ? CodeModel::Large : CodeModel::Small;
++  if (TT.isWindowsCygwinEnvironment())
++    return Is64Bit ? CodeModel::Medium : CodeModel::Small;
+   return CodeModel::Small;
+ }
+ 
+@@ -207,7 +211,7 @@ X86TargetMachine::X86TargetMachine(const
+     : LLVMTargetMachine(
+           T, computeDataLayout(TT), TT, CPU, FS, Options,
+           getEffectiveRelocModel(TT, RM),
+-          getEffectiveCodeModel(CM, JIT, TT.getArch() == Triple::x86_64), OL),
++          getEffectiveCodeModel(TT, CM, JIT), OL),
+       TLOF(createTLOF(getTargetTriple())) {
+   // Windows stack unwinder gets confused when execution flow "falls through"
+   // after a call to 'noreturn' function.
