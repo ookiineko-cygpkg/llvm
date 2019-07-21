@@ -1,7 +1,7 @@
 inherit ocaml cmake
 
 NAME="llvm"
-VERSION=6.0.1
+VERSION=7.0.1
 RELEASE=1
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
@@ -13,16 +13,18 @@ HOMEPAGE="http://www.llvm.org/"
 SRC_URI="http://www.llvm.org/releases/${VERSION}/llvm-${VERSION}.src.tar.xz"
 SRC_DIR="llvm-${VERSION}.src"
 PATCH_URI="
-	https://src.fedoraproject.org/rpms/llvm/raw/master/f/0001-CMake-Split-static-library-exports-into-their-own-ex.patch
-	https://src.fedoraproject.org/rpms/llvm/raw/master/f/0001-Filter-out-cxxflags-not-supported-by-clang.patch
-	https://src.fedoraproject.org/rpms/llvm/raw/master/f/0001-Export-LLVM_DYLIB_COMPONENTS-in-LLVMConfig.cmake.patch
+	fedora/0001-CMake-Split-static-library-exports-into-their-own-ex.patch
+	fedora/0001-Ensure-that-variant-part-discriminator-is-read-by-Me.patch
+	fedora/0001-unittests-Don-t-install-TestPlugin.so.patch
+	fedora/0001-Don-t-add-unnecessary-compiler-flags-to-llvm-config-.patch
 	4.0.1-cmake-install.patch
 	6.0.0-cmodel-medium.patch
 	4.0.1-llvm-config.patch
 	6.0.0-shlib-build.patch
+	7.0.1-as-needed.patch
 "
 
-PKG_NAMES="llvm llvm-doc libllvm5.0 libllvm-devel libllvm-devel-static
+PKG_NAMES="llvm llvm-doc libllvm7 libllvm-devel libllvm-devel-static
 	ocaml-llvm ocaml-llvm-doc"
 llvm_CATEGORY="Interpreters"
 llvm_CONTENTS="
@@ -39,8 +41,8 @@ llvm_CONTENTS="
 llvm_doc_CATEGORY="Doc"
 llvm_doc_SUMMARY="LLVM documentation"
 llvm_doc_CONTENTS="usr/share/doc/llvm/html/"
-libllvm5_0_SUMMARY="LLVM library (runtime)"
-libllvm5_0_CONTENTS="usr/bin/cygLLVM-5.0.dll"
+libllvm7_SUMMARY="LLVM library (runtime)"
+libllvm7_CONTENTS="usr/bin/cygLLVM-7.dll"
 libllvm_devel_SUMMARY="LLVM library (development)"
 libllvm_devel_REQUIRES="llvm"
 libllvm_devel_CONTENTS="
@@ -73,9 +75,9 @@ src_compile() {
 	cd ${B}
 	CYGCMAKE_GENERATOR="Ninja" \
 	cygcmake \
-		${ARCH_i686+-DCMAKE_C_FLAGS_RELWITHDEBINFO="-O2 -g1 -DNDEBUG"} \
-		${ARCH_i686+-DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-O2 -g1 -DNDEBUG"} \
-		-DLLVM_TARGETS_TO_BUILD="X86;AMDGPU;NVPTX;BPF" \
+		-DCMAKE_C_FLAGS_RELWITHDEBINFO="-O2 -g1 -DNDEBUG" \
+		-DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-O2 -g1 -DNDEBUG" \
+		-DLLVM_TARGETS_TO_BUILD=all \
 		-DLLVM_ENABLE_LIBCXX=OFF \
 		-DLLVM_ENABLE_ZLIB=ON \
 		-DLLVM_ENABLE_FFI=ON \
@@ -91,15 +93,15 @@ src_compile() {
 		-DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON \
 		-DLLVM_BUILD_EXTERNAL_COMPILER_RT=OFF
 	cygninja
-#	cygninja ocaml_doc
+	cygninja ocaml_doc
 	mv docs/man/{,llvm-}tblgen.1
 }
 
 src_install() {
 	cd ${B}
-	cyginstall
+	ninja_install
 
-	dosym libLLVM-${VERSION%.*}.dll.a /usr/lib/libLLVM-${VERSION}.dll.a
+	dosym libLLVM-${VERSION%%.*}.dll.a /usr/lib/libLLVM-${VERSION}.dll.a
 	# remove bogus symlinks
 	rm -f ${D}/usr/lib/*.dll
 }

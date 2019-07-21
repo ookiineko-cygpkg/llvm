@@ -22,7 +22,7 @@
 @@ -207,7 +211,7 @@ X86TargetMachine::X86TargetMachine(const
      : LLVMTargetMachine(
            T, computeDataLayout(TT), TT, CPU, FS, Options,
-           getEffectiveRelocModel(TT, RM),
+           getEffectiveRelocModel(TT, JIT, RM),
 -          getEffectiveCodeModel(CM, JIT, TT.getArch() == Triple::x86_64), OL),
 +          getEffectiveCodeModel(TT, CM, JIT), OL),
        TLOF(createTLOF(getTargetTriple())) {
