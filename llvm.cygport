@@ -1,7 +1,7 @@
 inherit ocaml cmake
 
 NAME="llvm"
-VERSION=7.0.1
+VERSION=8.0.1
 RELEASE=1
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
@@ -10,30 +10,32 @@ independent optimizer, along with code generation support for many popular CPUs
 (as well as some less common ones!) These libraries are built around a well
 specified code representation known as the LLVM intermediate representation."
 HOMEPAGE="http://www.llvm.org/"
-SRC_URI="http://www.llvm.org/releases/${VERSION}/llvm-${VERSION}.src.tar.xz"
+SRC_URI="https://github.com/llvm/llvm-project/releases/download/llvmorg-${VERSION}/llvm-${VERSION}.src.tar.xz"
+SRC_URI+=" https://github.com/llvm/llvm-project/releases/download/llvmorg-${VERSION}/polly-${VERSION}.src.tar.xz"
 SRC_DIR="llvm-${VERSION}.src"
 PATCH_URI="
-	fedora/0001-CMake-Split-static-library-exports-into-their-own-ex.patch
-	fedora/0001-Ensure-that-variant-part-discriminator-is-read-by-Me.patch
-	fedora/0001-unittests-Don-t-install-TestPlugin.so.patch
-	fedora/0001-Don-t-add-unnecessary-compiler-flags-to-llvm-config-.patch
+	fedora/0001-PATCH-Filter-out-cxxflags-not-supported-by-clang.patch
+	fedora/0001-PATCH-llvm-config.patch
 	4.0.1-cmake-install.patch
-	6.0.0-cmodel-medium.patch
-	4.0.1-llvm-config.patch
-	6.0.0-shlib-build.patch
-	7.0.1-as-needed.patch
+	8.0.1-cmodel-medium.patch
+	8.0.1-llvm-config.patch
+	8.0.1-as-needed-shared.patch
+	8.0.1-ocaml-shared.patch
+	8.0.1-polly-cmake.patch
 "
 
-PKG_NAMES="llvm llvm-doc libllvm7 libllvm-devel libllvm-devel-static
+PKG_NAMES="llvm llvm-doc libllvm8 libllvm-devel
+	libpolly8 libpolly-devel polly-doc
 	ocaml-llvm ocaml-llvm-doc"
 llvm_CATEGORY="Interpreters"
 llvm_CONTENTS="
-	--exclude=cygLLVM*.dll
+	--exclude=cyg*-8.dll
 	--exclude=llvm-config*
 	--exclude=llvm-tblgen*
 	--exclude=html
 	--exclude=ocaml-html
 	usr/bin/
+	usr/lib/LLVMPolly.dll
 	usr/share/doc/${NAME}
 	usr/share/man/man1/
 	usr/share/opt-viewer/
@@ -41,17 +43,22 @@ llvm_CONTENTS="
 llvm_doc_CATEGORY="Doc"
 llvm_doc_SUMMARY="LLVM documentation"
 llvm_doc_CONTENTS="usr/share/doc/llvm/html/"
-libllvm7_SUMMARY="LLVM library (runtime)"
-libllvm7_CONTENTS="usr/bin/cygLLVM-7.dll"
+libllvm8_SUMMARY="LLVM library (runtime)"
+libllvm8_CONTENTS="
+	usr/bin/cygLLVM*-8.dll
+	usr/bin/cygOptRemarks-8.dll
+"
 libllvm_devel_SUMMARY="LLVM library (development)"
-libllvm_devel_REQUIRES="llvm"
+libllvm_devel_OBSOLETES="libllvm-devel-static"
+libllvm_devel_REQUIRES="llvm libpolly-devel"
+#	--exclude=LLVMStaticExports*.cmake
 libllvm_devel_CONTENTS="
-	--exclude=LLVMStaticExports*.cmake
 	usr/bin/llvm-config*
 	usr/bin/llvm-tblgen*
 	usr/include/llvm*
 	usr/lib/cmake/llvm/
-	usr/lib/libLLVM-*.dll.a
+	usr/lib/libLLVM*.dll.a
+	usr/lib/libOptRemarks.dll.a
 	usr/share/man/man1/llvm-config*
 	usr/share/man/man1/llvm-tblgen*
 "
@@ -61,11 +68,29 @@ libllvm_devel_static_CONTENTS="
 	usr/lib/cmake/llvm/LLVMStaticExports*.cmake
 	usr/lib/libLLVM[A-Za-z]*.a
 "
+libpolly8_SUMMARY="LLVM loop optimizer library"
+libpolly8_CONTENTS="usr/bin/cygPolly*-8.dll"
+libpolly_devel_SUMMARY=${libpolly8_SUMMARY}
+libpolly_devel_REQUIRES="llvm"
+libpolly_devel_CONTENTS="
+	usr/include/polly/
+	usr/lib/cmake/polly/
+	usr/lib/libPolly*.dll.a
+"
+polly_doc_CATEGORY="Doc"
+polly_doc_SUMMARY=${libpolly8_SUMMARY}" documentation"
+polly_doc_CONTENTS="usr/share/doc/polly/html/"
 ocaml_llvm_SUMMARY="LLVM library (OCaml bindings)"
 ocaml_llvm_CONTENTS="${OCAML_LIBDIR#/}"
 ocaml_llvm_doc_CATEGORY="Doc"
 ocaml_llvm_doc_SUMMARY=${ocaml_llvm_SUMMARY}
 ocaml_llvm_doc_CONTENTS="usr/share/doc/${PN}/ocaml-html/"
+
+CYGPORT_USE_UNSTABLE_API=1
+src_unpack_hook() {
+	[ ! -d tools/polly ] || find tools/polly -delete
+	mv ../polly-${VERSION}.src tools/polly
+}
 
 src_compile() {
 	# leave optimization to build system, fails to dlopen with -O2
@@ -75,6 +100,7 @@ src_compile() {
 	cd ${B}
 	CYGCMAKE_GENERATOR="Ninja" \
 	cygcmake \
+		-DBUILD_SHARED_LIBS=ON \
 		-DCMAKE_C_FLAGS_RELWITHDEBINFO="-O2 -g1 -DNDEBUG" \
 		-DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-O2 -g1 -DNDEBUG" \
 		-DLLVM_TARGETS_TO_BUILD=all \
@@ -90,7 +116,7 @@ src_compile() {
 		-DLLVM_INCLUDE_DOCS=ON -DLLVM_BUILD_DOCS=ON \
 		-DLLVM_ENABLE_SPHINX=ON -DSPHINX_WARNINGS_AS_ERRORS=OFF \
 		-DLLVM_ENABLE_DOXYGEN=OFF \
-		-DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON \
+		-DLLVM_BUILD_LLVM_DYLIB=OFF -DLLVM_LINK_LLVM_DYLIB=OFF \
 		-DLLVM_BUILD_EXTERNAL_COMPILER_RT=OFF
 	cygninja
 	cygninja ocaml_doc
@@ -101,7 +127,7 @@ src_install() {
 	cd ${B}
 	ninja_install
 
-	dosym libLLVM-${VERSION%%.*}.dll.a /usr/lib/libLLVM-${VERSION}.dll.a
+#	dosym libLLVM-${VERSION%%.*}.dll.a /usr/lib/libLLVM-${VERSION}.dll.a
 	# remove bogus symlinks
-	rm -f ${D}/usr/lib/*.dll
+#	rm -f ${D}/usr/lib/*.dll
 }
