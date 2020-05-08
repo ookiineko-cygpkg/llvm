@@ -1,7 +1,8 @@
-inherit ocaml cmake
+PYTHON3_VERSION=3.7
+inherit ocaml python3 cmake
 
 NAME="llvm"
-VERSION=8.0.1
+VERSION=9.0.1
 RELEASE=1
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
@@ -14,28 +15,46 @@ SRC_URI="https://github.com/llvm/llvm-project/releases/download/llvmorg-${VERSIO
 SRC_URI+=" https://github.com/llvm/llvm-project/releases/download/llvmorg-${VERSION}/polly-${VERSION}.src.tar.xz"
 SRC_DIR="llvm-${VERSION}.src"
 PATCH_URI="
-	fedora/0001-PATCH-Filter-out-cxxflags-not-supported-by-clang.patch
-	fedora/0001-PATCH-llvm-config.patch
-	4.0.1-cmake-install.patch
+	fedora/0001-Filter-out-cxxflags-not-supported-by-clang.patch
+	fedora/0001-AVR-Fix-endianness-handling-in-AVR-MC.patch
+	fedora/0001-BPF-Handling-type-conversions-correctly-for-CO-RE.patch
+	fedora/0001-BPF-annotate-DIType-metadata-for-builtin-preseve_arr.patch
+	fedora/0001-Revert-SCEV-add-no-wrap-flag-for-SCEVAddExpr.patch
 	8.0.1-cmodel-medium.patch
 	8.0.1-llvm-config.patch
 	8.0.1-as-needed-shared.patch
 	8.0.1-ocaml-shared.patch
 	8.0.1-polly-cmake.patch
+	8.0.1-polly-system-isl.patch
+	9.0.1-tools-shared.patch
 "
 
-PKG_NAMES="llvm llvm-doc libllvm8 libllvm-devel
-	libpolly8 libpolly-devel polly-doc
+PKG_NAMES="llvm llvm-doc libllvm9 libllvm-devel
+	libpolly9 libpolly-devel polly-doc
 	ocaml-llvm ocaml-llvm-doc"
 llvm_CATEGORY="Interpreters"
 llvm_CONTENTS="
-	--exclude=cyg*-8.dll
 	--exclude=llvm-config*
 	--exclude=llvm-tblgen*
 	--exclude=html
 	--exclude=ocaml-html
-	usr/bin/
+	usr/bin/bugpoint.exe
+	usr/bin/count.exe
+	usr/bin/dsymutil.exe
+	usr/bin/FileCheck.exe
 	usr/lib/LLVMPolly.dll
+	usr/bin/llc.exe
+	usr/bin/lli.exe
+	usr/bin/lli-child-target.exe
+	usr/bin/llvm-*
+	usr/bin/not.exe
+	usr/bin/obj2yaml.exe
+	usr/bin/opt.exe
+	usr/bin/sancov.exe
+	usr/bin/sanstats.exe
+	usr/bin/verify-uselistorder.exe
+	usr/bin/yaml-bench.exe
+	usr/bin/yaml2obj.exe
 	usr/share/doc/${NAME}
 	usr/share/man/man1/
 	usr/share/opt-viewer/
@@ -43,22 +62,21 @@ llvm_CONTENTS="
 llvm_doc_CATEGORY="Doc"
 llvm_doc_SUMMARY="LLVM documentation"
 llvm_doc_CONTENTS="usr/share/doc/llvm/html/"
-libllvm8_SUMMARY="LLVM library (runtime)"
-libllvm8_CONTENTS="
-	usr/bin/cygLLVM*-8.dll
-	usr/bin/cygOptRemarks-8.dll
+libllvm9_SUMMARY="LLVM library (runtime)"
+libllvm9_CONTENTS="
+	usr/bin/cygLLVM*-9.dll
 "
 libllvm_devel_SUMMARY="LLVM library (development)"
 libllvm_devel_OBSOLETES="libllvm-devel-static"
-libllvm_devel_REQUIRES="llvm libpolly-devel"
+libllvm_devel_REQUIRES="llvm"
 #	--exclude=LLVMStaticExports*.cmake
+#	--exclude=LLVMTestExports*.cmake
 libllvm_devel_CONTENTS="
 	usr/bin/llvm-config*
 	usr/bin/llvm-tblgen*
 	usr/include/llvm*
 	usr/lib/cmake/llvm/
 	usr/lib/libLLVM*.dll.a
-	usr/lib/libOptRemarks.dll.a
 	usr/share/man/man1/llvm-config*
 	usr/share/man/man1/llvm-tblgen*
 "
@@ -68,10 +86,10 @@ libllvm_devel_static_CONTENTS="
 	usr/lib/cmake/llvm/LLVMStaticExports*.cmake
 	usr/lib/libLLVM[A-Za-z]*.a
 "
-libpolly8_SUMMARY="LLVM loop optimizer library"
-libpolly8_CONTENTS="usr/bin/cygPolly*-8.dll"
-libpolly_devel_SUMMARY=${libpolly8_SUMMARY}
-libpolly_devel_REQUIRES="llvm"
+libpolly9_SUMMARY="LLVM loop optimizer library"
+libpolly9_CONTENTS="usr/bin/cygPolly*-9.dll"
+libpolly_devel_SUMMARY=${libpolly9_SUMMARY}
+libpolly_devel_REQUIRES="llvm libisl-devel libllvm-devel"
 libpolly_devel_CONTENTS="
 	usr/include/polly/
 	usr/lib/cmake/polly/
@@ -90,6 +108,10 @@ CYGPORT_USE_UNSTABLE_API=1
 src_unpack_hook() {
 	[ ! -d tools/polly ] || find tools/polly -delete
 	mv ../polly-${VERSION}.src tools/polly
+	pushd tools/polly
+	mkdir -p include/polly/isl
+	cp -f lib/External/isl/include/isl/isl-noexceptions.h include/polly/isl/
+	popd
 }
 
 src_compile() {
@@ -108,16 +130,17 @@ src_compile() {
 		-DLLVM_ENABLE_ZLIB=ON \
 		-DLLVM_ENABLE_FFI=ON \
 		-DLLVM_ENABLE_RTTI=ON \
-		-DLLVM_INCLUDE_RUNTIME=ON -DLLVM_BUILD_RUNTIME=ON \
 		-DLLVM_INCLUDE_TOOLS=ON -DLLVM_BUILD_TOOLS=ON \
 		-DLLVM_INCLUDE_TESTS=ON -DLLVM_BUILD_TESTS=ON \
 		-DLLVM_INCLUDE_EXAMPLES=ON -DLLVM_BUILD_EXAMPLES=OFF \
-		-DLLVM_INCLUDE_UTILS=ON -DLLVM_BUILD_UTILS=OFF \
+		-DLLVM_INCLUDE_UTILS=ON -DLLVM_BUILD_UTILS=ON -DLLVM_INSTALL_UTILS=ON \
 		-DLLVM_INCLUDE_DOCS=ON -DLLVM_BUILD_DOCS=ON \
 		-DLLVM_ENABLE_SPHINX=ON -DSPHINX_WARNINGS_AS_ERRORS=OFF \
 		-DLLVM_ENABLE_DOXYGEN=OFF \
 		-DLLVM_BUILD_LLVM_DYLIB=OFF -DLLVM_LINK_LLVM_DYLIB=OFF \
-		-DLLVM_BUILD_EXTERNAL_COMPILER_RT=OFF
+		-DLLVM_BUILD_EXTERNAL_COMPILER_RT=OFF \
+		-DPOLLY_BUNDLED_ISL=OFF \
+		-DPYTHON_EXECUTABLE=${PYTHON3}
 	cygninja
 	cygninja ocaml_doc
 	mv docs/man/{,llvm-}tblgen.1
@@ -126,6 +149,10 @@ src_compile() {
 src_install() {
 	cd ${B}
 	ninja_install
+
+	# Polly has its own cmake macros
+	sed -e '/_expectedTarget /s/[^ ]*Polly[^ ]*//g;/Polly/,/^#.*llvm-ar/d'
+	    -i ${D}/usr/lib/cmake/llvm/LLVMExports*.cmake
 
 #	dosym libLLVM-${VERSION%%.*}.dll.a /usr/lib/libLLVM-${VERSION}.dll.a
 	# remove bogus symlinks
