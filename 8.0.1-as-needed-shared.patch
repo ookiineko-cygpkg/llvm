@@ -9,3 +9,12 @@
  add_llvm_library(TestPlugin MODULE BUILDTREE_ONLY
    TestPlugin.cpp
    )
+--- origsrc/llvm-10.0.1.src/utils/TableGen/GlobalISel/CMakeLists.txt	2023-07-23 01:48:14.450889300 +0800
++++ src/llvm-10.0.1.src/utils/TableGen/GlobalISel/CMakeLists.txt	2023-07-23 11:40:14.623527900 +0800
+@@ -1,5 +1,6 @@
+ set(LLVM_LINK_COMPONENTS
+   Support
++  TableGen
+   )
+ 
+ llvm_add_library(LLVMTableGenGlobalISel STATIC DISABLE_LLVM_LINK_LLVM_DYLIB
