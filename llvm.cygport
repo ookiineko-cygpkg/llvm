@@ -5,7 +5,7 @@ inherit python3 cmake
 BUILD_REQUIRES="  cmake flexdll libisl-devel python39-devel python39-alabaster python39-yaml"
 
 NAME="llvm"
-VERSION="11.0.0"
+VERSION="12.0.1"
 RELEASE="1"
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
@@ -20,7 +20,7 @@ SRC_URI="
 "
 SRC_DIR="${P}.src"
 PATCH_URI="
-  fedora/0001-llvm-Avoid-linking-llvm-cfi-verify-to-duplicate-libs.patch
+  fedora/0001-PATCH-llvm-Make-source-interleave-prefix-test-case-c.patch
   8.0.1-cmodel-medium.patch
   8.0.1-llvm-config.patch
   8.0.1-as-needed-shared.patch
@@ -28,14 +28,17 @@ PATCH_URI="
   8.0.1-polly-system-isl.patch
   9.0.1-tools-shared.patch
   9.0.1-limits.patch
-  10.0.1-cmake.patch
   10.0.1-polly-link.patch
+  12.0.1-cygming-fp-stackifier.patch
+  12.0.1-cygming-nm-version-option.patch
+  12.0.1-cygming-dlltool-default-target.patch
+  12.0.1-emutls-vs-autoimport.patch
 "
 
 RESTRICT="debuginfo"
 
-PKG_NAMES="llvm libllvm11 libllvm-devel
-  libpolly11 libpolly-devel"
+PKG_NAMES="llvm libllvm12 libllvm-devel
+  libpolly12 libpolly-devel"
 llvm_CATEGORY="Interpreters"
 llvm_CONTENTS="
   --exclude=llvm-config*
@@ -55,15 +58,16 @@ llvm_CONTENTS="
   usr/bin/opt.exe
   usr/bin/sancov.exe
   usr/bin/sanstats.exe
+  usr/bin/split-file.exe
   usr/bin/verify-uselistorder.exe
   usr/bin/yaml-bench.exe
   usr/bin/yaml2obj.exe
   usr/share/doc/${NAME}
   usr/share/opt-viewer/
 "
-libllvm11_SUMMARY="LLVM library (runtime)"
-libllvm11_CONTENTS="
-  usr/bin/cygLLVM*-11.dll
+libllvm12_SUMMARY="LLVM library (runtime)"
+libllvm12_CONTENTS="
+  usr/bin/cygLLVM*-12.dll
 "
 libllvm_devel_SUMMARY="LLVM library (development)"
 libllvm_devel_OBSOLETES="libllvm-devel-static"
@@ -83,9 +87,9 @@ libllvm_devel_static_CONTENTS="
   usr/lib/cmake/llvm/LLVMStaticExports*.cmake
   usr/lib/libLLVM[A-Za-z]*.a
 "
-libpolly11_SUMMARY="LLVM loop optimizer library"
-libpolly11_CONTENTS="usr/bin/cygPolly*-11.dll"
-libpolly_devel_SUMMARY=${libpolly11_SUMMARY}
+libpolly12_SUMMARY="LLVM loop optimizer library"
+libpolly12_CONTENTS="usr/bin/cygPolly*-12.dll"
+libpolly_devel_SUMMARY=${libpolly12_SUMMARY}
 libpolly_devel_REQUIRES="llvm libisl-devel libllvm-devel"
 libpolly_devel_CONTENTS="
   usr/include/polly/
