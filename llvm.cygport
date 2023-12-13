@@ -5,7 +5,7 @@ inherit python3 cmake
 BUILD_REQUIRES="  cmake flexdll libisl-devel python39-devel python39-alabaster python39-yaml"
 
 NAME="llvm"
-VERSION="12.0.1"
+VERSION="13.0.1"
 RELEASE="1"
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
@@ -20,25 +20,21 @@ SRC_URI="
 "
 SRC_DIR="${P}.src"
 PATCH_URI="
-  fedora/0001-PATCH-llvm-Make-source-interleave-prefix-test-case-c.patch
   8.0.1-cmodel-medium.patch
   8.0.1-llvm-config.patch
   8.0.1-as-needed-shared.patch
   8.0.1-polly-cmake.patch
   8.0.1-polly-system-isl.patch
   9.0.1-tools-shared.patch
-  9.0.1-limits.patch
   10.0.1-polly-link.patch
-  12.0.1-cygming-fp-stackifier.patch
-  12.0.1-cygming-nm-version-option.patch
-  12.0.1-cygming-dlltool-default-target.patch
   12.0.1-emutls-vs-autoimport.patch
+  13.0.1-cygming-objcopy-large-coff-section.patch
 "
 
 RESTRICT="debuginfo"
 
-PKG_NAMES="llvm libllvm12 libllvm-devel
-  libpolly12 libpolly-devel"
+PKG_NAMES="llvm libllvm13 libllvm-devel
+  libpolly13 libpolly-devel"
 llvm_CATEGORY="Interpreters"
 llvm_CONTENTS="
   --exclude=llvm-config*
@@ -65,9 +61,9 @@ llvm_CONTENTS="
   usr/share/doc/${NAME}
   usr/share/opt-viewer/
 "
-libllvm12_SUMMARY="LLVM library (runtime)"
-libllvm12_CONTENTS="
-  usr/bin/cygLLVM*-12.dll
+libllvm13_SUMMARY="LLVM library (runtime)"
+libllvm13_CONTENTS="
+  usr/bin/cygLLVM*-13.dll
 "
 libllvm_devel_SUMMARY="LLVM library (development)"
 libllvm_devel_OBSOLETES="libllvm-devel-static"
@@ -87,9 +83,9 @@ libllvm_devel_static_CONTENTS="
   usr/lib/cmake/llvm/LLVMStaticExports*.cmake
   usr/lib/libLLVM[A-Za-z]*.a
 "
-libpolly12_SUMMARY="LLVM loop optimizer library"
-libpolly12_CONTENTS="usr/bin/cygPolly*-12.dll"
-libpolly_devel_SUMMARY=${libpolly12_SUMMARY}
+libpolly13_SUMMARY="LLVM loop optimizer library"
+libpolly13_CONTENTS="usr/bin/cygPolly*-13.dll"
+libpolly_devel_SUMMARY=${libpolly13_SUMMARY}
 libpolly_devel_REQUIRES="llvm libisl-devel libllvm-devel"
 libpolly_devel_CONTENTS="
   usr/include/polly/
@@ -140,6 +136,6 @@ src_install() {
     ninja_install
 
     # Polly has its own cmake macros
-    sed -e '/_cmake_expected_target /s/[^ ]*Polly[^ ]*//g;/PollyPPCG/,/^#.*sancov/d' \
+    sed -e '/_cmake_expected_target /s/[^ ]*Polly[^ ]*//g;/ Polly/,/^#.*sancov/d' \
 	-i ${D}/usr/lib/cmake/llvm/LLVMExports*.cmake
 }
