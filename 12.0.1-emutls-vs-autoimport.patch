@@ -14,11 +14,11 @@ Backport of https://github.com/okuoku/llvm-project/commit/b749e9c576f6e1ddb068a1
 --- origsrc/llvm-11.0.0.src/lib/Target/TargetMachine.cpp	2020-10-07 18:10:48.000000000 +0800
 +++ src/llvm-11.0.0.src/lib/Target/TargetMachine.cpp	2023-07-25 20:48:41.208949800 +0800
 @@ -128,7 +128,7 @@
-   // don't assume the variables to be DSO local unless we actually know
-   // that for sure. This only has to be done for variables; for functions
-   // the linker can insert thunks for calling functions from another DLL.
--  if (TT.isWindowsGNUEnvironment() && TT.isOSBinFormatCOFF() &&
-+  if (TT.isOSCygMing() && TT.isOSBinFormatCOFF() && GV &&
-       GV->isDeclarationForLinker() && isa<GlobalVariable>(GV))
-     return false;
+     // don't assume the variables to be DSO local unless we actually know
+     // that for sure. This only has to be done for variables; for functions
+     // the linker can insert thunks for calling functions from another DLL.
+-    if (TT.isWindowsGNUEnvironment() && GV->isDeclarationForLinker() &&
++    if (TT.isOSCygMing() && GV->isDeclarationForLinker() &&
+         isa<GlobalVariable>(GV))
+       return false;
  

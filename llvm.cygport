@@ -5,7 +5,7 @@ inherit python3 cmake
 BUILD_REQUIRES="  cmake flexdll libisl-devel python39-devel python39-alabaster python39-yaml"
 
 NAME="llvm"
-VERSION="13.0.1"
+VERSION="14.0.5"
 RELEASE="1"
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
@@ -28,13 +28,14 @@ PATCH_URI="
   9.0.1-tools-shared.patch
   10.0.1-polly-link.patch
   12.0.1-emutls-vs-autoimport.patch
-  13.0.1-cygming-objcopy-large-coff-section.patch
+  14.0.5-cygming-coff-visibility-hidden.patch
+  14.0.5-cygwin-coff-visibility-hidden.patch
 "
 
 RESTRICT="debuginfo"
 
-PKG_NAMES="llvm libllvm13 libllvm-devel
-  libpolly13 libpolly-devel"
+PKG_NAMES="llvm libllvm14 libllvm-devel
+  libpolly14 libpolly-devel"
 llvm_CATEGORY="Interpreters"
 llvm_CONTENTS="
   --exclude=llvm-config*
@@ -61,9 +62,9 @@ llvm_CONTENTS="
   usr/share/doc/${NAME}
   usr/share/opt-viewer/
 "
-libllvm13_SUMMARY="LLVM library (runtime)"
-libllvm13_CONTENTS="
-  usr/bin/cygLLVM*-13.dll
+libllvm14_SUMMARY="LLVM library (runtime)"
+libllvm14_CONTENTS="
+  usr/bin/cygLLVM*-14.dll
 "
 libllvm_devel_SUMMARY="LLVM library (development)"
 libllvm_devel_OBSOLETES="libllvm-devel-static"
@@ -83,9 +84,9 @@ libllvm_devel_static_CONTENTS="
   usr/lib/cmake/llvm/LLVMStaticExports*.cmake
   usr/lib/libLLVM[A-Za-z]*.a
 "
-libpolly13_SUMMARY="LLVM loop optimizer library"
-libpolly13_CONTENTS="usr/bin/cygPolly*-13.dll"
-libpolly_devel_SUMMARY=${libpolly13_SUMMARY}
+libpolly14_SUMMARY="LLVM loop optimizer library"
+libpolly14_CONTENTS="usr/bin/cygPolly*-14.dll"
+libpolly_devel_SUMMARY=${libpolly14_SUMMARY}
 libpolly_devel_REQUIRES="llvm libisl-devel libllvm-devel"
 libpolly_devel_CONTENTS="
   usr/include/polly/
@@ -121,7 +122,7 @@ src_compile() {
       -DLLVM_INCLUDE_TESTS=OFF -DLLVM_BUILD_TESTS=OFF \
       -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_BUILD_EXAMPLES=OFF \
       -DLLVM_INCLUDE_UTILS=ON -DLLVM_BUILD_UTILS=ON -DLLVM_INSTALL_UTILS=ON \
-      -DLLVM_INCLUDE_DOCS=OFF -DLLVM_BUILD_DOCS=OFF \
+      -DLLVM_INCLUDE_DOCS=OFF -DLLVM_BUILD_DOCS=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF \
       -DLLVM_ENABLE_SPHINX=OFF \
       -DLLVM_ENABLE_DOXYGEN=OFF \
       -DLLVM_BUILD_LLVM_DYLIB=OFF -DLLVM_LINK_LLVM_DYLIB=OFF \
