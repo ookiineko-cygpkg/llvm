@@ -1,0 +1,46 @@
+// Backport of https://github.com/llvm/llvm-project/commit/dcbf61b3520ed7157688a269ad4dfa8545a00f79
+
+--- /dev/null
++++ b/llvm/test/tools/llvm-ar/thin-archive-relative-path.test
+@@ -0,0 +1,19 @@
++RUN: rm -rf %t && mkdir -p %t/foo %t/bar 
++
++RUN: yaml2obj %S/Inputs/elf.yaml -o %t/foo/elf.o
++RUN: cp %t/foo/elf.o %t/bar/elf.o
++RUN: cd %t
++
++Test a case in which CWD does not contain the archive, ensure replacement behaves as expected
++
++RUN: llvm-ar cr --thin foo/lib.a foo/elf.o
++RUN: llvm-ar t foo/lib.a  | FileCheck %s --check-prefix=FOO --implicit-check-not {{.}}
++
++RUN: llvm-ar cr --thin foo/lib.a bar/elf.o
++RUN: llvm-ar t foo/lib.a  | FileCheck %s --check-prefixes=FOO,BAR --implicit-check-not {{.}}
++
++RUN: llvm-ar cr --thin foo/lib.a foo/elf.o
++RUN: llvm-ar t foo/lib.a  | FileCheck %s --check-prefixes=FOO,BAR --implicit-check-not {{.}}
++
++FOO: foo/elf.o
++BAR: foo/../bar/elf.o
+
+--- a/llvm/tools/llvm-ar/llvm-ar.cpp
++++ b/llvm/tools/llvm-ar/llvm-ar.cpp
+@@ -875,8 +875,16 @@ static InsertAction computeInsertAction(ArchiveOperation Operation,
+ 
+   if (Operation == QuickAppend || Members.empty())
+     return IA_AddOldMember;
+-  auto MI = find_if(
+-      Members, [Name](StringRef Path) { return comparePaths(Name, Path); });
++
++  auto MI = find_if(Members, [Name](StringRef Path) {
++    if (Thin && !sys::path::is_absolute(Path)) {
++      Expected<std::string> PathOrErr =
++          computeArchiveRelativePath(ArchiveName, Path);
++      return comparePaths(Name, PathOrErr ? *PathOrErr : Path);
++    } else {
++      return comparePaths(Name, Path);
++    }
++  });
+ 
+   if (MI == Members.end())
+     return IA_AddOldMember;

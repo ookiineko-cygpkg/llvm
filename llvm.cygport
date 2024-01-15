@@ -5,7 +5,7 @@ inherit python3 cmake
 BUILD_REQUIRES="  cmake flexdll libisl-devel python39-devel python39-alabaster python39-yaml"
 
 NAME="llvm"
-VERSION="14.0.5"
+VERSION="15.0.7"
 RELEASE="1"
 CATEGORY="Libs"
 SUMMARY="LLVM bytecode interpreter and toolchain"
@@ -17,9 +17,11 @@ HOMEPAGE="http://www.llvm.org/"
 SRC_URI="
   https://github.com/llvm/llvm-project/releases/download/llvmorg-${PV}/${P}.src.tar.xz
   https://github.com/llvm/llvm-project/releases/download/llvmorg-${PV}/polly-${PV}.src.tar.xz
+  https://github.com/llvm/llvm-project/releases/download/llvmorg-${PV}/cmake-${PV}.src.tar.xz
 "
 SRC_DIR="${P}.src"
 PATCH_URI="
+  fedora/0001-Install-clang-tblgen.patch
   8.0.1-cmodel-medium.patch
   8.0.1-llvm-config.patch
   8.0.1-as-needed-shared.patch
@@ -30,12 +32,13 @@ PATCH_URI="
   12.0.1-emutls-vs-autoimport.patch
   14.0.5-cygming-coff-visibility-hidden.patch
   14.0.5-cygwin-coff-visibility-hidden.patch
+  15.0.7-cygming-thin-ar.patch
 "
 
 RESTRICT="debuginfo"
 
-PKG_NAMES="llvm libllvm14 libllvm-devel
-  libpolly14 libpolly-devel"
+PKG_NAMES="llvm libllvm15 libllvm-devel
+  libpolly15 libpolly-devel"
 llvm_CATEGORY="Interpreters"
 llvm_CONTENTS="
   --exclude=llvm-config*
@@ -56,15 +59,16 @@ llvm_CONTENTS="
   usr/bin/sancov.exe
   usr/bin/sanstats.exe
   usr/bin/split-file.exe
+  usr/bin/UnicodeNameMappingGenerator.exe
   usr/bin/verify-uselistorder.exe
   usr/bin/yaml-bench.exe
   usr/bin/yaml2obj.exe
   usr/share/doc/${NAME}
   usr/share/opt-viewer/
 "
-libllvm14_SUMMARY="LLVM library (runtime)"
-libllvm14_CONTENTS="
-  usr/bin/cygLLVM*-14.dll
+libllvm15_SUMMARY="LLVM library (runtime)"
+libllvm15_CONTENTS="
+  usr/bin/cygLLVM*-15.dll
 "
 libllvm_devel_SUMMARY="LLVM library (development)"
 libllvm_devel_OBSOLETES="libllvm-devel-static"
@@ -84,9 +88,9 @@ libllvm_devel_static_CONTENTS="
   usr/lib/cmake/llvm/LLVMStaticExports*.cmake
   usr/lib/libLLVM[A-Za-z]*.a
 "
-libpolly14_SUMMARY="LLVM loop optimizer library"
-libpolly14_CONTENTS="usr/bin/cygPolly*-14.dll"
-libpolly_devel_SUMMARY=${libpolly14_SUMMARY}
+libpolly15_SUMMARY="LLVM loop optimizer library"
+libpolly15_CONTENTS="usr/bin/cygPolly*-15.dll"
+libpolly_devel_SUMMARY=${libpolly15_SUMMARY}
 libpolly_devel_REQUIRES="llvm libisl-devel libllvm-devel"
 libpolly_devel_CONTENTS="
   usr/include/polly/
@@ -102,6 +106,7 @@ src_unpack_hook() {
     mkdir -p include/polly/isl
     cp -f lib/External/isl/include/isl/isl-noexceptions.h include/polly/isl/
     popd
+    mv ../cmake{-${PV}.src,}
 }
 
 src_compile() {
